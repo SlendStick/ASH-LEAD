@@ -247,7 +247,9 @@ func _update_stats() -> void:
 		text += Localization.t("stat_mag") + ": " + str(int(primary.get("mag", 0))) + "\n"
 		text += Localization.t("stat_reload") + ": " + str(primary.get("reload", 0)) + "\n"
 		text += primary.get("desc", "") + "\n\n"
-	var role: Dictionary = Data.role(String(["observer", "technician", "medic", "support", "negotiator", "guardian"][int(loadout.get("role", 0))]))
+	var role_keys: Array = ["observer", "technician", "medic", "support", "negotiator", "guardian"]
+	var role_index: int = clampi(int(loadout.get("role", 0)), 0, role_keys.size() - 1)
+	var role: Dictionary = Data.role(String(role_keys[role_index]))
 	text += Localization.t("role_title") + ": " + String(role.get("name", "")) + "\n"
 	text += String(role.get("desc", "")) + "\n"
 	stats_label.text = text
