@@ -96,15 +96,20 @@
 # Статический разбор всех GDScript-файлов
 for f in $(find autoload scripts tools -name '*.gd'); do gdparse "$f"; done
 
-# Проверка проекта в headless Godot
+# Загрузить каждый скрипт движком (ловит ошибки, которые не видит gdparse)
+godot --headless --path . --script res://tools/load_all.gd
+
+# Проверка проекта: скрипты, сцены, данные, текстуры, звуки, ключи локализации
 godot --headless --path . --script res://tools/validate.gd
 
-# Дымовой тест: меню → матч с ботами → проверка карты, ботов, HUD и оружия
-ASH_AUTOTEST=1 godot --headless --path . --script res://tools/autotest.gd
+# Дымовой тест: меню → матч с ботами → проверка связности карты, ботов, HUD и оружия
+ASH_AUTOTEST=1 godot --headless --path . res://tools/autotest.tscn
 ```
 
-CI (`.github/workflows/godot-ci.yml`) выполняет все три шага на каждый push и
-pull request.
+CI (`.github/workflows/godot-ci.yml`) выполняет все шаги на каждый push и pull
+request: разбор GDScript, `--import`, загрузка всех скриптов, `validate.gd`,
+дымовой `autotest.tscn`. При падении ошибки движка печатаются в лог и
+дублируются аннотациями.
 
 ## Структура
 
@@ -119,5 +124,5 @@ scripts/ui/   HUD и все экраны
 data/         JSON-данные оружия, режимов, карт, ролей, гражданских
 locale/       переводы
 assets/       процедурные текстуры, звуки и музыка
-tools/        генерация ассетов, валидация, дымовой тест, аудит
+tools/        генерация ассетов, валидация, загрузка скриптов, дымовой тест, аудит
 ```

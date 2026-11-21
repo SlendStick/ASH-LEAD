@@ -35,8 +35,11 @@ var death_screen
 var civilian_menu
 var negotiation_menu
 var status_label: Label
+var fps_label: Label
+var noise_label: Label
 var _vignette_texture: Texture2D
 var _last_hint := ""
+var _access_timer := 0.0
 
 
 func _ready() -> void:
@@ -58,6 +61,7 @@ func _build() -> void:
 	_build_feed()
 	_build_crosshair()
 	_build_vignette()
+	_build_accessibility()
 	_build_overlays()
 
 
@@ -103,6 +107,47 @@ func _build_top_bar() -> void:
 	status_label = _label("", 15)
 	status_label.position = Vector2(960 - 260, 62)
 	root.add_child(status_label)
+
+
+func _build_accessibility() -> void:
+	fps_label = _label("", 15)
+	fps_label.position = Vector2(16, 1080 - 32)
+	fps_label.visible = false
+	root.add_child(fps_label)
+	noise_label = _label("", 15)
+	noise_label.position = Vector2(1920 - 280, 62)
+	noise_label.visible = false
+	root.add_child(noise_label)
+
+
+## Accessibility options that are safe to toggle mid-match: FPS counter, noise
+## indicator, colour filters for colour-vision deficiency and high contrast.
+func _update_accessibility(delta: float) -> void:
+	_access_timer -= delta
+	if _access_timer > 0.0:
+		return
+	_access_timer = 0.25
+	var show_fps := bool(SettingsManager.get_setting("show_fps"))
+	fps_label.visible = show_fps
+	if show_fps:
+		fps_label.text = "%d FPS" % Engine.get_frames_per_second()
+	var show_noise := bool(SettingsManager.get_setting("noise_indicators"))
+	noise_label.visible = show_noise and match_ref != null and match_ref.local_player != null
+	if noise_label.visible:
+		var level: float = clampf(match_ref.local_player.noise_level, 0.0, 1.0)
+		noise_label.text = "%s %d%%" % [Localization.t("stealth"), int(level * 100.0)]
+		noise_label.modulate = Color(0.5, 0.95, 0.7) if level < 0.4 else Color(0.95, 0.75, 0.4)
+	var tint := Color(1, 1, 1)
+	match int(SettingsManager.get_setting("colorblind_mode")):
+		1:
+			tint = Color(0.92, 1.0, 1.12)
+		2:
+			tint = Color(1.08, 0.98, 1.05)
+		3:
+			tint = Color(1.05, 1.05, 0.9)
+	if bool(SettingsManager.get_setting("high_contrast")):
+		tint = Color(tint.r * 1.3 + 0.1, tint.g * 1.3 + 0.1, tint.b * 1.3 + 0.1)
+	root.modulate = tint
 
 
 func _build_minimap() -> void:
@@ -264,6 +309,7 @@ func update_hud(match: Match, delta: float) -> void:
 	_update_weapon()
 	_update_teammates(delta)
 	_update_vignette(delta)
+	_update_accessibility(delta)
 	minimap.queue_redraw()
 	map_overlay.queue_redraw()
 
