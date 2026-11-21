@@ -24,7 +24,9 @@ func _process(delta: float) -> void:
 				continue
 			if a.global_position.distance_to(global_position) < pickup_radius:
 				if a.loadout.has(weapon_id):
-					reserve = world.call("ammo_from_corpse", a, reserve) if world.has_method("ammo_from_corpse") else reserve
+					# scavenger gets 50% more reserve ammo out of every corpse
+					if world.has_method("ammo_from_corpse"):
+						reserve = int(world.call("ammo_from_corpse", a, reserve))
 					a.reserve = maxi(a.reserve, 0) + reserve
 					reserve = 0
 					queue_free()
@@ -32,10 +34,14 @@ func _process(delta: float) -> void:
 				a.add_weapon(weapon_id)
 				a.switch_to(weapon_id)
 				# scavenger picks guns up with a full magazine
-				a.mag = int(Db.WEAPONS.get(weapon_id, {}).get("mag", mag)) if Perks.pickup_comes_loaded(a) else mag
+				if Perks.pickup_comes_loaded(a):
+					a.mag = int(Db.WEAPONS.get(weapon_id, {}).get("mag", mag))
+				else:
+					a.mag = mag
 				a.reserve = reserve
 				Sfx.play_at("pickup", global_position, -6.0)
-				Signals.notify.emit("Подобрано: %s" % str(Db.WEAPONS.get(weapon_id, {}).get("short", weapon_id)), "info")
+				var short_name := str(Db.WEAPONS.get(weapon_id, {}).get("short", weapon_id))
+				Signals.notify.emit("Подобрано: %s" % short_name, "info")
 				queue_free()
 				return
 
@@ -53,4 +59,6 @@ func _draw() -> void:
 		draw_line(Vector2(-20, 0), Vector2(26, 0), Color(0.85, 0.88, 0.92), 1.5)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var font := ThemeDB.fallback_font
-	draw_string(font, Vector2(-26, -14), str(w.get("short", weapon_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.7, 0.85, 1.0, 0.85))
+	var label := str(w.get("short", weapon_id))
+	draw_string(font, Vector2(-26, -14), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12,
+		Color(0.7, 0.85, 1.0, 0.85))
