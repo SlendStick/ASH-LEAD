@@ -42,7 +42,7 @@ func _read_movement() -> void:
 
 
 func _read_aim() -> void:
-	character.aiming = Input.is_action_pressed("alt_fire") or Input.is_joy_button_pressed(0, JOY_BUTTON_TRIGGER_RIGHT)
+	character.aiming = Input.is_action_pressed("alt_fire") or Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_STICK)
 	if not Input.get_connected_joypads().is_empty():
 		var aim := Vector2(Input.get_joy_axis(0, JOY_AXIS_RIGHT_X), Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y))
 		if aim.length() > 0.35:
@@ -53,7 +53,7 @@ func _read_aim() -> void:
 
 
 func _read_actions() -> void:
-	character.want_fire = Input.is_action_pressed("fire") or Input.is_joy_button_pressed(0, JOY_BUTTON_TRIGGER_RIGHT)
+	character.want_fire = Input.is_action_pressed("fire") or Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_STICK)
 	character.want_interact = Input.is_action_pressed("interact") or Input.is_joy_button_pressed(0, JOY_BUTTON_B)
 	if Input.is_action_just_pressed("reload") or Input.is_joy_button_pressed(0, JOY_BUTTON_X):
 		character.want_reload = true

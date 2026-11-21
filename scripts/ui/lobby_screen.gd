@@ -296,7 +296,7 @@ func _refill_bots(players: Array) -> void:
 			if int(p["team"]) == team:
 				count += 1
 		while count < team_size:
-			var id := 900 + team * 100 + count
+			var id: int = 900 + int(team) * 100 + count
 			var exists := false
 			for p in players:
 				if int(p["id"]) == id:

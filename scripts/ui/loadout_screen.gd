@@ -178,10 +178,10 @@ func _populate_weapons() -> void:
 	var secondary_index := 0
 	for weapon in Data.weapons():
 		var wid := String(weapon.get("id", ""))
-		var class_name: String = weapon.get("class", "")
-		if class_name == "melee":
+		var weapon_kind: String = weapon.get("class", "")
+		if weapon_kind == "melee":
 			continue
-		if class_name == "pistol":
+		if weapon_kind == "pistol":
 			secondary_option.add_item(String(weapon.get("name", wid)))
 			if wid == String(loadout.get("secondary", "p9")):
 				secondary_index = secondary_option.item_count - 1

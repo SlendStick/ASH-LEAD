@@ -75,7 +75,7 @@ var sprite: Sprite2D
 var marker: Sprite2D
 var health_bar: Sprite2D
 var health_bar_bg: Sprite2D
-var aim_light: Light2D
+var aim_light: PointLight2D
 var white_texture: Texture2D
 var _step_timer := 0.0
 var _noise_timer := 0.0
@@ -164,7 +164,7 @@ func _apply_team_visual() -> void:
 			prefix = "char_cop_"
 		GameTypes.Team.CIVILIAN:
 			prefix = "char_civ_"
-	var index := 1 + (abs(char_name.hash()) % 4)
+	var index: int = 1 + (abs(char_name.hash()) % 4)
 	var tex_name := prefix
 	match team:
 		GameTypes.Team.POLICE:
@@ -207,12 +207,12 @@ func _build_visuals() -> void:
 	health_bar.scale = Vector2(44, 5)
 	health_bar.modulate = Color(0.25, 0.9, 0.55)
 	add_child(health_bar)
-	aim_light = Light2D.new()
+	aim_light = PointLight2D.new()
 	aim_light.texture = _make_cone_texture(256)
 	aim_light.energy = 1.5
 	aim_light.color = Color(0.75, 0.85, 1.0, 0.85)
 	aim_light.texture_scale = 2.4
-	aim_light.blend_mode = Light2D.BLEND_MODE_ADD
+	aim_light.blend_mode = PointLight2D.BLEND_MODE_ADD
 	add_child(aim_light)
 
 
@@ -351,7 +351,7 @@ func _fire() -> void:
 		var dir := Vector2.RIGHT.rotated(base_angle + spread)
 		match_ref.fire_bullet(self, global_position + dir * 22.0, dir, weapon)
 	match_ref.spawn_flash(global_position + aim_dir * 26.0, aim_dir)
-	match_ref.play_sound("shoot_" + weapon.weapon_class, global_position, -4.0, randf_range(0.94, 1.06))
+	match_ref.play_sound("shoot_" + weapon.weapon_class(), global_position, -4.0, randf_range(0.94, 1.06))
 	match_ref.noise.add_noise(global_position, 1.0, 700.0 * weapon.noise, self)
 	match_ref.resonance.add_noise_event(global_position, weapon.noise)
 	match_ref.spawn_shell(global_position + aim_dir.rotated(PI * 0.5) * 14.0)

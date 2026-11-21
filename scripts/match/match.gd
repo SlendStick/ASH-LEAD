@@ -474,8 +474,8 @@ func melee_hit(shooter: Character, dir: Vector2, range_px: float, damage: float)
 	for other in characters:
 		if other == shooter or not other.alive:
 			continue
-		var to := other.global_position - shooter.global_position
-		var dist := to.length()
+		var to: Vector2 = other.global_position - shooter.global_position
+		var dist: float = to.length()
 		if dist > range_px:
 			continue
 		if absf(U.angle_diff(dir.angle(), to.angle())) > 0.8:
@@ -496,7 +496,7 @@ func add_suppression_around(pos: Vector2, radius: float) -> void:
 	for c in characters:
 		if not c.alive:
 			continue
-		var d := c.global_position.distance_to(pos)
+		var d: float = c.global_position.distance_to(pos)
 		if d < radius:
 			c.add_suppression((1.0 - d / radius) * 0.7)
 
@@ -1146,7 +1146,7 @@ func _nearest_downed_teammate() -> Character:
 	var best_d := 1e9
 	for c in characters:
 		if c.team == local_player.team and c.downed:
-			var d := c.global_position.distance_to(local_player.global_position)
+			var d: float = c.global_position.distance_to(local_player.global_position)
 			if d < best_d:
 				best_d = d
 				best = c

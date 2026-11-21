@@ -45,7 +45,7 @@ func complete(character: Character) -> void:
 
 func cancel(_character: Character) -> void:
 	busy_by = null
-	cancelled.emit(self, character)
+	cancelled.emit(self, _character)
 
 
 # ---------------------------------------------------------------- device

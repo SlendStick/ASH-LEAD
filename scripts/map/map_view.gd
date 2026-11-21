@@ -188,14 +188,14 @@ func _build_lights() -> void:
 	lights_root.name = "Lights"
 	add_child(lights_root)
 	for info in map.lights:
-		var light := Light2D.new()
+		var light := PointLight2D.new()
 		light.texture = light_texture
 		light.position = info["pos"]
 		light.color = info["color"]
 		light.energy = float(info.get("energy", 1.0))
 		light.texture_scale = float(info.get("radius", 200.0)) / (light_texture.get_width() * 0.5)
 		light.shadow_enabled = false
-		light.blend_mode = Light2D.BLEND_MODE_ADD
+		light.blend_mode = PointLight2D.BLEND_MODE_ADD
 		lights_root.add_child(light)
 		_light_sources.append({"light": light, "base": light.energy, "flicker": bool(info.get("flicker", false)), "phase": randf() * TAU})
 
@@ -289,7 +289,7 @@ func _process(delta: float) -> void:
 	for entry in _light_sources:
 		if not entry["flicker"]:
 			continue
-		var light: Light2D = entry["light"]
+		var light: PointLight2D = entry["light"]
 		var base: float = entry["base"]
 		var phase: float = entry["phase"]
 		var noise := sin(_time * 17.0 + phase) * sin(_time * 7.3 + phase * 2.0)
