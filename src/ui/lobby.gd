@@ -81,6 +81,7 @@ func _ready() -> void:
 
 func _refresh() -> void:
 	for c in teams_box.get_children():
+		teams_box.remove_child(c)
 		c.queue_free()
 	var counts := {0: 0, 1: 0}
 	for m in NetLink.lobby:

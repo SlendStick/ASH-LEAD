@@ -67,6 +67,7 @@ func _update_money() -> void:
 
 func _clear() -> void:
 	for c in grid.get_children():
+		grid.remove_child(c)
 		c.queue_free()
 
 

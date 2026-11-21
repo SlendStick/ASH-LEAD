@@ -22,6 +22,7 @@ static func actor_row(a) -> Dictionary:
 	return {
 		"id": a.a_id,
 		"t": a.team,
+		"peer": int(a.get_meta("peer", 0)),
 		"n": a.a_name,
 		"x": q(a.global_position.x),
 		"y": q(a.global_position.y),
@@ -86,12 +87,16 @@ static func diff(prev: Dictionary, cur: Dictionary) -> Dictionary:
 	var pa: Array = prev.get("a", [])
 	var ca: Array = cur.get("a", [])
 	var changed: Array = []
-	for i in range(ca.size()):
-		var row: Dictionary = ca[i]
-		if i >= pa.size():
+	# match rows by actor id, not by array position: dead actors drop out of the
+	# snapshot and would otherwise shift every later row
+	var old_by_id := {}
+	for old_row in pa:
+		old_by_id[int(old_row.get("id", -1))] = old_row
+	for row in ca:
+		var old: Dictionary = old_by_id.get(int(row.get("id", -1)), {})
+		if old.is_empty():
 			changed.append(row)
 			continue
-		var old: Dictionary = pa[i]
 		var same := true
 		for k in ["id", "x", "y", "f", "hp", "ar", "mg", "rs", "dn", "dd", "cr", "sp", "am", "rl", "w"]:
 			if old.get(k) != row.get(k):

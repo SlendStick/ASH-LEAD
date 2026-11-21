@@ -104,6 +104,7 @@ func setup(config: Dictionary) -> void:
 	if rng.seed == 0:
 		rng.seed = int(Time.get_unix_time_from_system()) ^ (OS.get_process_id() * 7919)
 	var seed_val := int(cfg.get("seed", rng.randi()))
+	cfg["seed"] = seed_val
 	map = MapGen.generate(theme_id, seed_val, mode_id)
 	var theme: Dictionary = map.theme
 	var mode_data: Dictionary = Db.MODES.get(mode_id, Db.MODES["heist"])
@@ -133,7 +134,11 @@ func setup(config: Dictionary) -> void:
 
 	_build_doors()
 	_build_explosives()
-	_spawn_everyone()
+	var online_client := NetLink.is_online() and not NetLink.is_host
+	if not online_client:
+		_spawn_everyone()
+	else:
+		_build_offline_hud_shell()
 	_build_camera()
 	_build_hud()
 	_build_mode(mode_id)
@@ -204,6 +209,7 @@ func _spawn_everyone() -> void:
 	local_actor.set_outfit(human_outfit)
 	local_actor.world = self
 	local_actor.map = map
+	local_actor.set_meta("peer", NetLink.my_peer_id())
 	local_actor.money = int(cfg.get("start_money", 2500))
 	_place_actor(local_actor, team, true)
 
@@ -274,26 +280,26 @@ func _outfit_for(mode_data: Dictionary, team: int, family: String) -> String:
 
 func _apply_loadout(a: Actor, team: int, mode_data: Dictionary) -> void:
 	var loadout_key := "loadout_crim" if team == Db.TEAM_CRIMINAL else "loadout_police"
-	var load: Dictionary = GameFlow.profile.get(loadout_key, GameFlow.DEFAULT_LOADOUT["crim" if team == 0 else "police"])
+	var kit: Dictionary = GameFlow.profile.get(loadout_key, GameFlow.DEFAULT_LOADOUT["crim" if team == 0 else "police"])
 	if str(mode_data.get("family", "")) == "arcade":
 		# arcade modes use curated kits, not the meta loadout
 		if str(cfg.get("mode", "")) == "arms_race":
-			load = {"primary": "pm9", "secondary": "pm9", "melee": "knife", "armor": "none", "gadget_a": "smoke", "gadget_b": "flashbang", "perk": "runner"}
+			kit = {"primary": "pm9", "secondary": "pm9", "melee": "knife", "armor": "none", "gadget_a": "smoke", "gadget_b": "flashbang", "perk": "runner"}
 			a.set_meta("arms_race", true)
 		else:
-			load = {"primary": "vk9" if team == 0 else "m4", "secondary": "pm9", "melee": "knife", "armor": "kevlar", "gadget_a": "grenade", "gadget_b": "flashbang", "perk": "ghost"}
+			kit = {"primary": "vk9" if team == 0 else "m4", "secondary": "pm9", "melee": "knife", "armor": "kevlar", "gadget_a": "grenade", "gadget_b": "flashbang", "perk": "ghost"}
 	a.loadout.clear()
-	a.setup_stats([str(load.get("perk", ""))])
-	a.add_weapon(str(load.get("primary", "vk9")))
-	a.add_weapon(str(load.get("secondary", "pm9")))
-	a.add_weapon(str(load.get("melee", "knife")))
-	a.equip_weapon(str(load.get("primary", "vk9")))
-	a.give_armor(str(load.get("armor", "none")))
+	a.setup_stats([str(kit.get("perk", ""))])
+	a.add_weapon(str(kit.get("primary", "vk9")))
+	a.add_weapon(str(kit.get("secondary", "pm9")))
+	a.add_weapon(str(kit.get("melee", "knife")))
+	a.equip_weapon(str(kit.get("primary", "vk9")))
+	a.give_armor(str(kit.get("armor", "none")))
 	a.gadget_charges = {}
 	for g in ["grenade", "flashbang", "smoke", "molotov", "remote_charge"]:
 		a.gadget_charges[g] = 0
-	var g1 := str(load.get("gadget_a", "flashbang"))
-	var g2 := str(load.get("gadget_b", "smoke"))
+	var g1 := str(kit.get("gadget_a", "flashbang"))
+	var g2 := str(kit.get("gadget_b", "smoke"))
 	a.gadget_charges[g1] = int(a.gadget_charges.get(g1, 0)) + 2
 	a.gadget_charges[g2] = int(a.gadget_charges.get(g2, 0)) + 2
 	# objective gadgets
@@ -305,7 +311,7 @@ func _apply_loadout(a: Actor, team: int, mode_data: Dictionary) -> void:
 	if team == Db.TEAM_POLICE:
 		a.gadget_charges["breach_kit"] = 2
 		a.gadget_charges["fortify"] = 1
-		if str(load.get("perk", "")) == "medic" or str(load.get("perk", "")) == "comms":
+		if str(kit.get("perk", "")) == "medic" or str(kit.get("perk", "")) == "comms":
 			a.gadget_charges["medkit"] = 1
 
 
@@ -494,6 +500,40 @@ func _net_boot() -> void:
 		spectator = false
 
 
+## A client has no local simulation, but it still needs a camera and a HUD so the
+## loading transition lands on something. Actors appear with the first snapshot.
+func _build_offline_hud_shell() -> void:
+	_build_camera()
+	_build_hud()
+
+
+## Client: an actor id we have never seen -> build it from the snapshot row.
+func _spawn_net_actor(row: Dictionary) -> Actor:
+	var node: Actor = null
+	var peer := int(row.get("peer", 0))
+	if peer != 0 and peer == NetLink.my_peer_id():
+		node = ActorPlayer.new()
+		local_actor = node as ActorPlayer
+	else:
+		node = Actor.new()
+		node.is_bot = peer == 0
+	node.configure(int(row.get("id", next_actor_id)), str(row.get("n", "БОЕЦ")), int(row.get("t", 0)), node.is_bot)
+	next_actor_id = maxi(next_actor_id, node.a_id + 1)
+	node.set_meta("peer", peer)
+	node.skin_outfit = str(row.get("out", "heist"))
+	if actors_root == null:
+		return null
+	actors_root.add_child(node)
+	actors.append(node)
+	node.world = self
+	node.map = map
+	node.set_outfit(node.skin_outfit)
+	if node == local_actor:
+		if hud != null:
+			hud.call("bind_player", node)
+	return node
+
+
 func actor_for_peer(peer: int) -> Actor:
 	for a in actors:
 		if a != null and int(a.get_meta("peer", 0)) == peer:
@@ -504,10 +544,13 @@ func actor_for_peer(peer: int) -> Actor:
 ## Called on the client when the host ships the seed + roster.
 func on_net_roster(payload: Dictionary) -> void:
 	roster = payload.get("roster", [])
-	for a in actors:
-		if a != null and not a.is_civilian:
-			a.queue_free()
-	actors.clear()
+	if not actors.is_empty():
+		# already mirrored from snapshots: attach peer ids, keep the actors
+		for row in roster:
+			var actor := _find_actor(int(row.get("id", -1)))
+			if actor != null:
+				actor.set_meta("peer", int(row.get("peer", 0)))
+		return
 	for row in roster:
 		if bool(row.get("bot", false)):
 			continue
@@ -556,8 +599,16 @@ func apply_snapshot(data: Dictionary) -> void:
 	if bool(data.get("full", false)):
 		for a in actors:
 			a.set_meta("net_seen", false)
+	# roster arrives as a reliable side-channel: peers, names, outfits
+	if data.has("r"):
+		for row in data["r"]:
+			var found := _find_actor(int(row.get("id", -1)))
+			if found != null:
+				found.set_meta("peer", int(row.get("peer", 0)))
 	for row in data.get("a", []):
 		var a := _find_actor(int(row.get("id", -1)))
+		if a == null:
+			a = _spawn_net_actor(row)
 		if a == null:
 			continue
 		a.set_meta("net_seen", true)

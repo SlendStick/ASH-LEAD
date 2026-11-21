@@ -509,6 +509,7 @@ func set_scoreboard(vis: bool) -> void:
 
 func _rebuild_scoreboard() -> void:
 	for c in scoreboard_rows.get_children():
+		scoreboard_rows.remove_child(c)
 		c.queue_free()
 	scoreboard_rows.add_child(UiKit.neon_title("ТАБЛО", 28, UiKit.P["magenta"]))
 	var header := HBoxContainer.new()
@@ -591,6 +592,7 @@ func command_at(screen_pos: Vector2) -> void:
 func show_possession_prompt() -> void:
 	possession_panel.visible = true
 	for c in possession_buttons.get_children():
+		possession_buttons.remove_child(c)
 		c.queue_free()
 	var team: int = int(world.get("cfg").get("team", 0))
 	var count := 0
@@ -628,6 +630,7 @@ func show_end(summary: Dictionary) -> void:
 	end_shown = true
 	end_panel.visible = true
 	for c in end_panel.get_children():
+		end_panel.remove_child(c)
 		c.queue_free()
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 120)
@@ -698,6 +701,7 @@ func _on_replay(clip: Dictionary) -> void:
 	viewer.set("world", world)
 	viewer.set("autoplay", true)
 	for c in replay_panel.get_children():
+		replay_panel.remove_child(c)
 		c.queue_free()
 	replay_panel.add_child(viewer)
 	replay_panel.visible = true

@@ -66,6 +66,27 @@ play stop seek stream volume_db pitch_scale bus set_identity
 set_shader_parameter delta speed_scale
 """.split())
 
+KEYWORDS = {
+    "if", "for", "while", "match", "return", "func", "class", "and", "or", "not",
+    "in", "is", "as", "pass", "break", "continue", "signal", "var", "const",
+    "enum", "extends", "super", "self", "await", "print", "assert", "push_error",
+    "range", "load", "preload", "str", "int", "float", "bool", "len", "typeof",
+    "Vector2", "Vector2i", "Color", "Rect2", "Rect2i", "Array", "Dictionary",
+    "String", "max", "min", "abs", "clamp", "lerp", "sign", "floor", "ceil",
+    "round", "sqrt", "pow", "sin", "cos", "tan", "atan2", "randf", "randi",
+    "randf_range", "randi_range", "fmod", "wrapf", "wrapi", "snapped", "is_equal_approx",
+    "maxf", "minf", "maxi", "mini", "absf", "absi", "signf", "signi", "clampf", "clampi",
+    "clamp", "hash", "lerpf", "inverse_lerp", "remap", "smoothstep", "stepify",
+    "deg_to_rad", "rad_to_deg", "move_toward", "nearest_po2", "linear_to_db",
+    "print_debug", "print_rich", "push_warning", "type_exists", "is_instance_of",
+    "instance_from_id", "var_to_str", "str_to_var", "get_stack", "weakref",
+    "Color8", "Color", "Rect2", "Vector3", "Transform2D", "PackedScene",
+    "roundf", "floorf", "ceilf", "snappedf", "else", "elif", "get_node_or_null",
+    "set_process_unhandled_input", "set_process_input", "set_physics_process_internal",
+    "notify_property_list_changed", "get_parent", "get_tree", "is_inside_tree",
+    "add_to_group", "remove_from_group", "is_in_group", "set_deferred", "get_meta",
+}
+
 PRIMITIVE = {
     "Vector2", "Vector2i", "Color", "Rect2", "Rect2i", "Array", "Dictionary",
     "String", "int", "float", "bool", "Callable", "Variant", "Node", "Node2D",
@@ -251,6 +272,31 @@ def check_file(path):
             found = any(const in e["consts"] for e in chain(cls))
             if not found:
                 report(path, i, "UNKNOWN-CONST", "%s.%s" % (cls, const), line)
+
+    # calls to own-class methods with no receiver (`_host_tick()` etc.)
+    own = None
+    m = re.search(r"^class_name\s+(\w+)", text, re.M)
+    if m:
+        own = m.group(1)
+    elif path.endswith(".gd"):
+        # scripts without class_name still get checked against their own body
+        own = None
+    if own is not None:
+        defined = set()
+        for entry in chain(own):
+            defined |= entry["funcs"]
+            defined |= entry["vars"]
+            defined |= entry["consts"]
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if stripped.startswith(("#", "func ", "signal ")):
+                continue
+            code = line.split("#")[0]
+            for m2 in re.finditer(r"(?<![\w.\"'])([a-z_]\w*)\s*\(", code):
+                name = m2.group(1)
+                if name in BUILTIN or name in KEYWORDS or name in defined:
+                    continue
+                report(path, i, "UNKNOWN-CALL", name + "()", line)
 
     # GDScript hazards
     for i, line in enumerate(lines, 1):

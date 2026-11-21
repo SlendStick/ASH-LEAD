@@ -31,6 +31,7 @@ var frames_recv := 0
 var bytes_estimate := 0
 var last_rtt_ms := 0
 var _roster_sent := false
+var _roster_attached := false
 
 
 func setup(world_node: Node) -> void:
@@ -59,7 +60,7 @@ func _on_fail(reason: String) -> void:
 func _send_roster() -> void:
 	if not is_active or not is_host or world == null:
 		return
-	var m: GeneratedMap = world.get("map")
+	var m = world.get("map")
 	var rows: Array = []
 	for a in world.get("actors"):
 		if a == null or not is_instance_valid(a) or a.is_civilian:
@@ -77,6 +78,42 @@ func _send_roster() -> void:
 	}
 	NetLink.rpc_any("net_roster", payload)
 	_roster_sent = true
+
+
+## 20 Hz snapshot pump. Full packet every FULL_RESEND_EVERY seconds, diffs in
+## between; the roster rides on the first packet so clients can name actors.
+func _host_tick(delta: float) -> void:
+	send_accum += delta
+	full_accum += delta
+	if send_accum < 1.0 / SEND_HZ or world == null:
+		return
+	send_accum = 0.0
+	var packet := NetCodec.build_snapshot(world)
+	if packet.is_empty():
+		return
+	var forced_full := full_accum >= FULL_RESEND_EVERY
+	if forced_full:
+		full_accum = 0.0
+		packet["full"] = true
+	elif not last_prev.is_empty():
+		packet = NetCodec.diff(last_prev, packet)
+	if not _roster_attached:
+		var roster_rows: Array = []
+		for a in world.get("actors"):
+			if a != null and is_instance_valid(a):
+				roster_rows.append({
+					"id": a.a_id, "peer": int(a.get_meta("peer", 0)),
+					"bot": a.is_bot,
+				})
+		packet["r"] = roster_rows
+		_roster_attached = true
+	last_prev = NetCodec.build_snapshot(world)
+	last_snapshot = packet
+	frames_sent += 1
+	# ~64 bytes per changed actor is a fair estimate for the bandwidth readout
+	var changed: int = (packet.get("a", []) as Array).size()
+	bytes_estimate += 48 + changed * 64
+	NetLink.publish_snapshot(packet)
 
 
 ## Called by NetLink.net_roster on a client.

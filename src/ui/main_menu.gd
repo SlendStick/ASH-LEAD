@@ -110,6 +110,7 @@ func _add_rail_button(parent: VBoxContainer, text: String, screen: String, accen
 func _navigate(screen: String) -> void:
 	current_screen = screen
 	for c in panel_root.get_children():
+		panel_root.remove_child(c)
 		c.queue_free()
 	match screen:
 		"home":
@@ -130,6 +131,7 @@ func _navigate(screen: String) -> void:
 
 func _clear() -> void:
 	for c in panel_root.get_children():
+		panel_root.remove_child(c)
 		c.queue_free()
 
 
@@ -493,9 +495,10 @@ func _fill_loadout_slots(team_id: int) -> void:
 	if box == null:
 		return
 	for c in box.get_children():
+		box.remove_child(c)
 		c.queue_free()
 	var key := "loadout_crim" if team_id == 0 else "loadout_police"
-	var load: Dictionary = GameFlow.profile.get(key, GameFlow.DEFAULT_LOADOUT["crim" if team_id == 0 else "police"])
+	var kit: Dictionary = GameFlow.profile.get(key, GameFlow.DEFAULT_LOADOUT["crim" if team_id == 0 else "police"])
 	var rows := [["primary", "ОСНОВНОЕ", ["primary"]], ["secondary", "ПИСТОЛЕТ", ["secondary"]], ["melee", "БЛИЖНИЙ БОЙ", ["melee"]], ["gadget_a", "ГАДЖЕТ 1", ["gadget"]], ["gadget_b", "ГАДЖЕТ 2", ["gadget"]], ["armor", "БРОНЯ", ["armor"]], ["perk", "ПЕРК", ["perk"]]]
 	for row_def in rows:
 		var slot := str(row_def[0])
@@ -528,7 +531,7 @@ func _fill_loadout_slots(team_id: int) -> void:
 					continue
 				items.append(str(w.get("name", wid)))
 				ids.append(wid)
-		var opt := UiKit.make_option(items, maxi(0, ids.find(str(load.get(slot, "")))))
+		var opt := UiKit.make_option(items, maxi(0, ids.find(str(kit.get(slot, "")))))
 		opt.custom_minimum_size = Vector2(620, 34)
 		var s := slot
 		var kk := key
