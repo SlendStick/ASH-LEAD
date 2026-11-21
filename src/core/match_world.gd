@@ -78,6 +78,8 @@ var start_time := 0.0
 var net: NetSession = null
 var post_fx: Node = null
 var fog: FogOverlay = null
+var barricades: Array[Dictionary] = []
+var drones: Array[Dictionary] = []
 var roster: Array = []
 var is_client := false
 var pending_input: Dictionary = {}
@@ -694,6 +696,7 @@ func _physics_process(delta: float) -> void:
 	_tick_police_arrival(delta)
 
 	_tick_visibility(delta)
+	_tick_drones(delta)
 	_tick_minimap_cache()
 	if fog != null:
 		fog.eye = local_actor
@@ -807,6 +810,49 @@ func _tick_visibility(delta: float) -> void:
 				can_see = a.global_position.distance_to(local_actor.global_position) < 520.0
 			a.visual.modulate.a = 1.0 if can_see else 0.0
 	visible_enemies = new_vis
+
+
+## Drones expand the team's vision: anything within their radius counts as
+## spotted even without a friendly line of sight.
+func _tick_drones(delta: float) -> void:
+	if drones.is_empty():
+		return
+	var alive: Array[Dictionary] = []
+	for d in drones:
+		d["life"] = float(d["life"]) - delta
+		if float(d["life"]) <= 0.0:
+			continue
+		alive.append(d)
+		if int(d["team"]) != int(cfg.get("team", 0)):
+			continue
+		for e in actors:
+			if e == null or e.dead or e.team == int(d["team"]):
+				continue
+			if e.global_position.distance_to(d["pos"]) < 420.0:
+				visible_enemies[e.a_id] = true
+	drones = alive
+
+
+## Barricades: destroyed by gunfire, they unseal their tile. Damage arrives from
+## bullets through impact_fx(kind="barricade").
+func damage_barricade_at(pos: Vector2, amount: float) -> bool:
+	for b in barricades:
+		if (b["pos"] as Vector2).distance_to(pos) > 30.0:
+			continue
+		if amount <= 0.0:
+			return true
+		b["hp"] = float(b["hp"]) - amount
+		if float(b["hp"]) <= 0.0:
+			var cell: Vector2i = b["cell"]
+			if map.tile_at(cell) == GeneratedMap.TK_CRATE:
+				map.set_tile_cell(cell, GeneratedMap.TK_FLOOR)
+				map.refresh_cell(cell)
+				if visual != null:
+					visual._build_physics_bounds()
+			barricades.erase(b)
+			Signals.match_event.emit("БАРРИКАДА РАЗБИТА", Color("ff1f4b"), "fortify")
+		return true
+	return false
 
 
 func _tick_minimap_cache() -> void:
@@ -931,9 +977,11 @@ func _break_window(c: Vector2i) -> void:
 
 
 func impact_fx(pos: Vector2, normal: Vector2, kind: String) -> void:
+	Signals.impact.emit(pos, normal, kind)
+	if kind == "barricade":
+		damage_barricade_at(pos, 12.0)
 	if effects == null:
 		return
-	Signals.impact.emit(pos, normal, kind)
 	if kind == "flesh":
 		effects.bleeds(pos, normal, 0.5)
 	else:
@@ -995,6 +1043,44 @@ func spawn_thrown(origin: Vector2, dir: Vector2, w: Dictionary, shooter: Actor, 
 	t.setup(gadget_id, origin, dir, w, shooter, float(w.get("speed", 620.0)))
 	fx_root.add_child(t)
 	return t
+
+
+## Fortify: a 400 HP barricade on the grid. Blocks bullets and walking until
+## it is shot down, so it buys a corridor for a few seconds.
+func deploy_barricade(pos: Vector2, team: int) -> void:
+	var cell := map.world_to_cell(pos)
+	if not map.walkable(cell):
+		return
+	map.set_tile_cell(cell, GeneratedMap.TK_CRATE)
+	map.refresh_cell(cell)
+	if visual != null:
+		visual._build_physics_bounds()
+	barricades.append({"cell": cell, "hp": 400.0, "team": team, "pos": pos})
+	Signals.match_event.emit("БАРРИКАДА", Color("ffb02b"), "fortify")
+
+
+## Breach kit: silently unlocks a door within arm's reach instead of kicking it.
+func breach_kit_used(pos: Vector2, by: Actor) -> void:
+	var best: Door = null
+	var best_d := 90.0
+	for d in doors:
+		var dist := d.global_position.distance_to(pos)
+		if dist < best_d:
+			best_d = dist
+			best = d
+	if best == null:
+		Signals.notify.emit("Ломать нечего: подойди к двери", "warning")
+		return
+	best.set_locked(false)
+	Signals.notify.emit("Замок снят тихо", "good")
+	if by != null:
+		by.score += 20
+
+
+## Drone: a hovering eye that reveals enemies near it for a while.
+func deploy_drone(pos: Vector2, team: int, by: Actor) -> void:
+	drones.append({"pos": pos, "team": team, "life": 25.0, "by": by.a_id if by != null else 0})
+	Signals.match_event.emit("ДРОН В ВОЗДУХЕ", Color("35c9ff"), "drone")
 
 
 func spawn_smoke(pos: Vector2, radius: float, seconds: float) -> void:

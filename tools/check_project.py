@@ -344,6 +344,27 @@ def check_world_contract():
                         report(path, i, "WORLD-CONTRACT", "world has no " + m.group(1), line)
 
 
+def check_sfx_ids():
+    """play_at("…") with an id that has no synthesized bank is a silent no-op.
+    Catch those before a designer spends an hour wondering why the door is quiet."""
+    path = os.path.join(SRC, "autoload", "sfx.gd")
+    if not os.path.exists(path):
+        return
+    text = read(path)
+    built = set(re.findall(r'banks\["(\w+)"\]\s*=', text))
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            fpath = os.path.join(root, fn)
+            for i, line in enumerate(read(fpath).split("\n"), 1):
+                if line.strip().startswith("#"):
+                    continue
+                for m in re.finditer(r'\bplay(?:_at|_ui)?\(\s*"([\w]+)"', line):
+                    if m.group(1) not in built:
+                        report(fpath, i, "MISSING-SFX", m.group(1), line)
+
+
 def check_project_godot():
     path = os.path.join(ROOT, "project.godot")
     if not os.path.exists(path):
@@ -373,6 +394,7 @@ def main():
     for path in files:
         check_file(path)
     check_world_contract()
+    check_sfx_ids()
     check_project_godot()
 
     if problems:

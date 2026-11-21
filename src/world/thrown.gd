@@ -94,6 +94,26 @@ func _detonate() -> void:
 		return
 	alive = false
 	var w := weapon
+	# support gadgets: they never explode, they change the battlefield
+	if kind == "medkit":
+		_apply_medkit()
+		queue_free()
+		return
+	if kind == "fortify":
+		if world != null and world.has_method("deploy_barricade"):
+			world.call("deploy_barricade", pos, owner_team)
+		queue_free()
+		return
+	if kind == "drone":
+		if world != null and world.has_method("deploy_drone"):
+			world.call("deploy_drone", pos, owner_team, owner_actor)
+		queue_free()
+		return
+	if kind == "breach_kit":
+		if world != null and world.has_method("breach_kit_used"):
+			world.call("breach_kit_used", pos, owner_actor)
+		queue_free()
+		return
 	if kind == "smoke":
 		if world != null and world.has_method("spawn_smoke"):
 			world.call("spawn_smoke", pos, float(w.get("smoke", 12.0)), float(w.get("blast", 180.0)))
@@ -117,6 +137,31 @@ func _detonate() -> void:
 	if float(w.get("blast", 0.0)) > 0.0 and world != null and world.has_method("explode"):
 		world.call("explode", pos, float(w.get("blast", 150.0)), float(w.get("blast_dmg", 120.0)), owner_actor, kind)
 	queue_free()
+
+
+## Medkit: heals the thrower's team in a small radius, revives downed allies.
+func _apply_medkit() -> void:
+	if world == null:
+		return
+	var healed := 0
+	for a in world.call("actors_all"):
+		if a == null or a.dead or a.team != owner_team:
+			continue
+		if a.global_position.distance_to(pos) > 90.0:
+			continue
+		if a.downed:
+			a.revive_progress = 1.0
+			a.downed = false
+			a.hp = 45.0
+			a.visual.downed = false
+			a.visual.queue_redraw()
+			healed += 1
+		elif a.hp < a.max_hp:
+			a.hp = minf(a.max_hp, a.hp + 100.0)
+			healed += 1
+	Signals.actor_healed.emit(owner_actor.a_id if owner_actor != null else 0, float(healed))
+	if healed > 0:
+		Signals.match_event.emit("МЕДПАКЕТ: %d" % healed, Color("2bff9a"), "heal")
 
 
 func arm_installed() -> void:
