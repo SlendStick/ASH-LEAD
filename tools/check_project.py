@@ -445,6 +445,59 @@ def check_data_refs():
                         report(path, i, "MISSING-MAP", m.group(1), line)
 
 
+def check_perk_table():
+    """Every perk in Db must have a real implementation and vice versa: a shop
+    entry with no numbers behind it is a lie the player pays for."""
+    perks_path = os.path.join(SRC, "actors", "perks.gd")
+    db_path = os.path.join(SRC, "autoload", "db.gd")
+    if not (os.path.exists(perks_path) and os.path.exists(db_path)):
+        return
+    db_text = read(db_path)
+    m = re.search(r"^const PERKS\s*:?=\s*\{(.*?)\n\}" , db_text, re.S | re.M)
+    if not m:
+        return
+    in_db = set(re.findall(r'^\t"(\w+)":', m.group(1), re.M))
+    perks_text = read(perks_path)
+    listed = re.search(r"const LIST := \[(.*?)\]", perks_text, re.S)
+    in_code = set(re.findall(r'"(\w+)"', listed.group(1))) if listed else set()
+    for perk in sorted(in_db - in_code):
+        report(perks_path, 0, "PERK-NOT-IMPLEMENTED", perk, "есть в Db.PERKS, нет в Perks.LIST")
+    for perk in sorted(in_code - in_db):
+        report(perks_path, 0, "PERK-NOT-IN-SHOP", perk, "есть в Perks.LIST, нет в Db.PERKS")
+    # Each perk is consumed through a `Perks.some_helper()` static function. A
+    # perk whose helpers are never called anywhere is dead weight: it changes
+    # nothing the gameplay reads.
+    func_uses = {}
+    chunks = re.split(r"\nstatic func ", perks_text)
+    for chunk in chunks[1:]:
+        name = chunk.split("(")[0].strip()
+        # body = everything after the signature line
+        body = chunk.split("\n", 1)[1] if "\n" in chunk else ""
+        # drop comments first: a doc line mentioning "battering" must not make
+        # kick_stun look like it still uses the perk
+        code = "\n".join(l for l in body.split("\n") if not l.strip().startswith("#"))
+        for perk in re.findall(r'"(\w+)"', code):
+            func_uses.setdefault(perk, set()).add(name)
+    called = set()
+    # `Perks.has(a, "predator")` is a legitimate direct use at the call site
+    direct = set()
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd") or fn == "perks.gd":
+                continue
+            text = read(os.path.join(root, fn))
+            called |= set(re.findall(r"Perks\.(\w+)\(", text))
+            direct |= set(re.findall(r'Perks\.has\([^,]+,\s*"(\w+)"\)', text))
+    for perk in sorted(in_code):
+        if perk in direct:
+            continue
+        helpers = func_uses.get(perk, set())
+        if not helpers:
+            report(perks_path, 0, "PERK-NO-NUMBERS", perk, "в Perks нет ни одной функции с этим перком")
+        elif not (helpers & called):
+            report(perks_path, 0, "PERK-UNUSED", perk, "хелперы %s никто не вызывает" % sorted(helpers))
+
+
 def check_project_godot():
     path = os.path.join(ROOT, "project.godot")
     if not os.path.exists(path):
@@ -478,6 +531,7 @@ def main():
     check_music_ids()
     check_class_refs()
     check_data_refs()
+    check_perk_table()
     check_project_godot()
 
     if problems:
