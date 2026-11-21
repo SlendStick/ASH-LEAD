@@ -45,6 +45,15 @@ func tick_mode(_delta: float) -> void:
 	pass
 
 
+## Every mode finishes an objective the same way: deactivate + tell the HUD.
+## Keeping the emit here means the signal can never go silently dead again.
+func complete_objective(o: ObjectiveNode, by_team: int = -1) -> void:
+	if o == null:
+		return
+	o.deactivate()
+	Signals.objective_completed.emit(o.label, by_team)
+
+
 func announce(text: String, color: Color = Color("35c9ff")) -> void:
 	Signals.match_event.emit(text, color, "mode")
 
@@ -136,6 +145,11 @@ func retreat_point(_actor: Actor) -> Variant:
 
 
 func win(team: int, reason: String) -> void:
+	if not round_active:
+		return
+	round_active = false
+	rounds_won[team] = int(rounds_won.get(team, 0)) + 1
+	Signals.round_ended.emit(team, reason)
 	world.call("finish_match", team, reason)
 
 

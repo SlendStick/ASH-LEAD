@@ -31,7 +31,20 @@ func _ready() -> void:
 	add_child(rect)
 	Signals.player_damaged.connect(_on_damage)
 	Signals.alarm_changed.connect(_on_alarm)
+	# the video tab writes the profile and pings: the overlay must react live,
+	# otherwise the CRT toggle only works after a restart
+	Signals.settings_changed.connect(_on_settings_changed)
+	GameFlow.prefs_changed.connect(_on_prefs_changed)
 	apply_settings()
+
+
+func _on_settings_changed(_section: String) -> void:
+	apply_settings()
+
+
+func _on_prefs_changed(section: String) -> void:
+	if section == "video" or section == "all":
+		apply_settings()
 
 
 func _on_damage(_amount: float) -> void:

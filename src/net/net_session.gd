@@ -31,6 +31,8 @@ var frames_recv := 0
 var bytes_estimate := 0
 var last_rtt_ms := 0
 var _roster_sent := false
+## accumulates up to one second between `network_stats` emissions for the HUD
+var _stats_timer := 0.0
 var _roster_attached := false
 
 
@@ -117,6 +119,7 @@ func _host_tick(delta: float) -> void:
 	var changed: int = (packet.get("a", []) as Array).size()
 	bytes_estimate += 48 + changed * 64
 	NetLink.publish_snapshot(packet)
+	_emit_stats()
 
 
 ## Called by NetLink.net_roster on a client.
@@ -165,6 +168,7 @@ func _on_snapshot(data: Dictionary) -> void:
 	if is_host or world == null:
 		return
 	frames_recv += 1
+	_emit_stats()
 	world.call("apply_snapshot", data)
 
 
@@ -185,6 +189,15 @@ func tick(delta: float) -> void:
 		_host_tick(delta)
 	else:
 		_client_tick(delta)
+
+
+func _emit_stats() -> void:
+	_stats_timer += 1.0 / SEND_HZ
+	if _stats_timer < 1.0:
+		return
+	_stats_timer = 0.0
+	var kbps := float(bytes_estimate) / 1024.0
+	Signals.network_stats.emit(kbps if is_host else 0.0, 0.0 if is_host else kbps, NetLink.latency_ms)
 
 
 func stats_line() -> String:

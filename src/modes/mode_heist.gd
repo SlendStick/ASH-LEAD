@@ -97,6 +97,7 @@ func tick_mode(delta: float) -> void:
 			o.color = Color("2bff9a")
 			Sfx.play_at("ui_objective", o.global_position, 0.0)
 			announce("СЕЙФ ВСКРЫТ. ЗАБЕРИ СУМКУ.", Color("2bff9a"))
+			Signals.objective_completed.emit(o.label, Db.TEAM_CRIMINAL)
 	# van window / exfil
 	if bags_secured >= bags_total and not van_open:
 		van_open = true

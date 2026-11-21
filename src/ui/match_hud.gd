@@ -74,6 +74,7 @@ func _ready() -> void:
 	Signals.killfeed.connect(_on_killfeed)
 	Signals.alarm_changed.connect(_on_alarm)
 	Signals.match_ended.connect(show_end)
+	Signals.network_stats.connect(_on_network_stats)
 	Signals.interact_prompt.connect(_on_prompt)
 	Signals.score_changed.connect(_on_score)
 	Signals.replay_ready.connect(_on_replay)
@@ -345,8 +346,6 @@ func _tick_panels(_delta: float) -> void:
 	var sc: Dictionary = world.get("team_score")
 	score_label.text = "%d  :  %d" % [int(sc.get(0, 0)), int(sc.get(1, 0))]
 	mode_label.text = str(Db.MODES.get(str(world.get("cfg").get("mode", "")), {}).get("name", ""))
-	if net_label != null:
-		net_label.text = str(world.get_meta("net_line", ""))
 	# alarm / police
 	var alarm := int(world.get("alarm_level"))
 	if alarm >= 2:
@@ -479,6 +478,15 @@ func _weapon_glyph(w: String) -> String:
 		"special":
 			return "☠"
 	return "•"
+
+
+## `network_stats` fires about once a second from NetSession; the top bar shows
+## role, ping and traffic without touching the session object.
+func _on_network_stats(sent_kbps: float, recv_kbps: float, ping_ms: int) -> void:
+	if net_label == null:
+		return
+	var dir := "ХОСТ" if recv_kbps <= 0.001 else "КЛИЕНТ"
+	net_label.text = "%s  %.1f КБ/с  %d мс" % [dir, maxf(sent_kbps, recv_kbps), ping_ms]
 
 
 func _on_alarm(level: int, reason: String) -> void:

@@ -103,6 +103,13 @@ func reset_progress() -> void:
 	player_codename = old_name
 	save_profile()
 	prefs_changed.emit("all")
+	announce_settings_changed()
+
+
+## One place that tells listeners the persisted profile changed section by
+## section, so audio/video/HUD consumers can react without polling the dict.
+func announce_settings_changed() -> void:
+	Signals.settings_changed.emit("all")
 
 
 func set_screen(s: String) -> void:
