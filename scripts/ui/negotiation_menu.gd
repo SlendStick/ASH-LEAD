@@ -50,7 +50,7 @@ func _build() -> void:
 	status = Label.new()
 	status.text = Localization.t("negotiation_hint")
 	status.add_theme_font_size_override("font_size", 16)
-	status.autowrap = TextServer.AUTOWRAP_WORD_SMART
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.modulate = Color(0.8, 0.85, 0.9)
 	box.add_child(status)
 	for entry in [

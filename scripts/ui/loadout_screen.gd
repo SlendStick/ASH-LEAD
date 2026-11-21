@@ -103,7 +103,7 @@ func _build() -> void:
 	armor_option.item_selected.connect(_on_equipment)
 	equip_box.add_child(_row(Localization.t("loadout_armor"), armor_option))
 	stats_label = _label("", 17)
-	stats_label.autowrap = TextServer.AUTOWRAP_WORD_SMART
+	stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stats_label.custom_minimum_size = Vector2(760, 320)
 	equip_box.add_child(stats_label)
 
@@ -166,7 +166,7 @@ func config_delay(mode_data: Dictionary) -> float:
 
 func _add_briefing_line(key: String, value: String) -> void:
 	var label := _label(Localization.t(key) + ": " + value, 18)
-	label.autowrap = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(930, 0)
 	briefing_box.add_child(label)
 

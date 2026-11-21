@@ -506,7 +506,7 @@ func _add_chat_line(text: String) -> void:
 		child.queue_free()
 	for message in chat_messages:
 		var label := _label(message, 15)
-		label.autowrap = TextServer.AUTOWRAP_WORD_SMART
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size = Vector2(540, 0)
 		chat_box.add_child(label)
 

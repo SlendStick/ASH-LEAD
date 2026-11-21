@@ -54,7 +54,7 @@ func _build() -> void:
 	info_label.add_theme_font_size_override("font_size", 17)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.modulate = Color(0.8, 0.85, 0.9)
-	info_label.autowrap = TextServer.AUTOWRAP_WORD_SMART
+	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(info_label)
 	spectate_button = Button.new()
 	spectate_button.text = Localization.t("spectate_teammate")

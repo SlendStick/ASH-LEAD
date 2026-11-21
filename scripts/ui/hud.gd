@@ -119,7 +119,7 @@ func _build_minimap() -> void:
 	objective_label = _label("", 17)
 	objective_label.position = Vector2(1920 - 280, 222)
 	objective_label.custom_minimum_size = Vector2(264, 60)
-	objective_label.autowrap = TextServer.AUTOWRAP_WORD_SMART
+	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(objective_label)
 
 

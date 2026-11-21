@@ -86,10 +86,12 @@ jobs:
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
           $GODOT --headless --path . --script res://tools/validate.gd > /tmp/validate.log 2>&1 || true
           cat /tmp/validate.log
+          awk '/^SCRIPT ERROR:/{msg=$0; getline nxt; line=msg " || " nxt; if (!seen[line]++) print line}' /tmp/validate.log \
+            | head -25 | tr '\n' ' ' > /tmp/digest3.txt
+          if [ -s /tmp/digest3.txt ]; then
+            echo "::error::VALIDATE_ERRORS $(cat /tmp/digest3.txt)"
+          fi
           if grep -qE "SCRIPT ERROR|Parse Error" /tmp/validate.log; then
-            grep -E "SCRIPT ERROR|Parse Error|VALIDATION_FAIL" /tmp/validate.log | head -30 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
             exit 1
           fi
           grep -q "VALIDATE_OK" /tmp/validate.log
@@ -100,10 +102,12 @@ jobs:
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
           ASH_AUTOTEST=1 $GODOT --headless --path . --script res://tools/autotest.gd > /tmp/autotest.log 2>&1 || true
           cat /tmp/autotest.log
+          awk '/^SCRIPT ERROR:/{msg=$0; getline nxt; line=msg " || " nxt; if (!seen[line]++) print line}' /tmp/autotest.log \
+            | head -25 | tr '\n' ' ' > /tmp/digest2.txt
+          if [ -s /tmp/digest2.txt ]; then
+            echo "::error::AUTOTEST_ERRORS $(cat /tmp/digest2.txt)"
+          fi
           if grep -qE "SCRIPT ERROR|Parse Error" /tmp/autotest.log; then
-            grep -E "SCRIPT ERROR|Parse Error|AUTOTEST_FAIL" /tmp/autotest.log | head -30 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
             exit 1
           fi
           grep -q "AUTOTEST_OK" /tmp/autotest.log

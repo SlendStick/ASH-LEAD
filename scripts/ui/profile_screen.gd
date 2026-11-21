@@ -84,7 +84,7 @@ func _label(text: String, size: int) -> Label:
 
 func _add_line(box: VBoxContainer, key: String, value: String, size: int = 18) -> void:
 	var label := _label((Localization.t(key) + ": " if not key.is_empty() else "") + value, size)
-	label.autowrap = TextServer.AUTOWRAP_WORD_SMART
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(label)
 
 
