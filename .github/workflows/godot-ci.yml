@@ -57,7 +57,7 @@ jobs:
           $GODOT --headless --path . --import 2>&1 | tee /tmp/import.log
           if grep -q "SCRIPT ERROR" /tmp/import.log || grep -q "Parse Error" /tmp/import.log; then
             echo "import step reported script errors"
-            grep -E "SCRIPT ERROR|Parse Error|ERROR" /tmp/import.log | head -30 | while IFS= read -r line; do
+            grep -A2 -E "SCRIPT ERROR|Parse Error" /tmp/import.log | head -80 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1
