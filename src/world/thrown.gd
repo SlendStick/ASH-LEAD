@@ -161,7 +161,8 @@ func _apply_medkit() -> void:
 			a.visual.queue_redraw()
 			healed += 1
 		elif a.hp < a.max_hp:
-			a.hp = minf(a.max_hp, a.hp + 100.0)
+			# medic perk: the medkit heals 50 more on top of its 100
+			a.hp = minf(a.max_hp, a.hp + 100.0 + Perks.medkit_bonus(owner_actor))
 			healed += 1
 	Signals.actor_healed.emit(owner_actor.a_id if owner_actor != null else 0, float(healed))
 	if healed > 0:

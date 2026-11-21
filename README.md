@@ -24,9 +24,15 @@ Godot 4.3+  ·  GL Compatibility  ·  чистый GDScript, ни одного �
 Проверка целостности проекта без редактора:
 
 ```bash
-tools/validate.sh          # парсинг всех .gd + проверки путей/сигналов/членов классов + шейдеры
+tools/validate.sh          # парсинг всех .gd + путей/сигналов/членов классов + шейдеры
 tools/validate.sh --lint   # плюс gdlint (стиль, справочно)
 ```
+
+`tools/check_project.py` внутри ловит именно те ошибки, которые Godot сообщает только в
+рантайме: вызовы `world.call("…")`/`hud.call("…")` без такого метода, обращения к
+несуществующим членам `class_name`-классов (`UiKit.make_vspace`, `Perks.foo`), звуки и
+музыкальные треки без банка, id оружия/режимов/карт вне `Db`, битые `res://`-пути и
+автолоады в `project.godot`.
 
 Сетевой матч по локальной сети: «ONLINE» → «ХОСТ (LAN)» на одной машине, «НАЙТИ СЕРВЕРЫ В LAN»
 на другой. Матч в браузере — через реле: `node tools/relay_server.js`.
@@ -64,6 +70,18 @@ tools/validate.sh --lint   # плюс gdlint (стиль, справочно)
 маскировку, шум и дым. Луч зрения рисуется туманом войны (`shaders/fog_of_war.gdshader` +
 `FogOverlay`), память команды хранит последнюю известную точку контакта. Стрельба и шаги
 создают шумовые события, которые слышит ИИ.
+
+### Перки и гаджеты
+14 перков с реальными числами в `src/actors/perks.gd` (а не только текстом в магазине):
+тихий шаг, дыхание, мародёр, санитар, техник, бегун, хищник, связист, таран, отвлечение,
+стрелок, живучесть, маска, взломщик. Каждый правит значение, которое бой, движение или
+скрытность уже читают, поэтому люди и боты получают одинаковый эффект. Покупаются раз в
+арсенале за деньги профиля и слотятся в лоадаут.
+
+Гаджеты поддержки ставятся у ног (G или арсенал): **аптечка** лечит и поднимает своих,
+**баррикада** перекрывает проход 400 HP и разбирается выстрелами, **дрон** подсвечивает
+врагов в радиусе, **набор взлома** тихо снимает замок. Гранаты, дым, флешки, молотов и
+заряды летят по наведению.
 
 ### Боты, приказы, вселение
 Боты заполняют пустые слоты, занимают позиции, фланкируют, отступают, реагируют на трупы
@@ -115,7 +133,7 @@ src/autoload/          Signals · Db · NetLink · Sfx · GameFlow · Ui (UiLaye
 src/core/              MatchWorld · ReplaySystem · Util · Boot
 src/world/             GeneratedMap · MapGen · MapVisual + painters · Bullet · Thrown · Effects
                        Door/ObjectiveNode/WeaponPickup · FogOverlay · NeonGlow · 4 типа декалей
-src/actors/            Actor · ActorPlayer · ActorVisual · BotBrain · CivilianAI
+src/actors/            Actor · ActorPlayer · ActorVisual · BotBrain · CivilianAI · Perks
 src/modes/             BaseMode + 10 режимов
 src/net/               NetSession · NetCodec · LanDiscovery
 src/ui/                UiKit · MainMenu · MatchHud · Crosshair · Minimap · BuyMenu · CommandWheel

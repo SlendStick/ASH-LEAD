@@ -1371,7 +1371,11 @@ func _find_downed_ally(a: Actor) -> Actor:
 func revive_ally(by: Actor, fallen: Actor) -> void:
 	if by == null or fallen == null or not fallen.downed:
 		return
+	# medic's revive speed already shortened the hold time; here they also leave
+	# the patient with more health
 	fallen.revive(by)
+	if Perks.has(by, "medic"):
+		fallen.hp = minf(fallen.max_hp, fallen.hp + 20.0)
 	by.score += 60
 	Signals.match_event.emit("ПОДНЯТ: %s" % fallen.a_name, Color("2bff9a"), "revive")
 
