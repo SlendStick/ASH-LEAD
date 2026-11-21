@@ -129,7 +129,7 @@ func _build_world() -> void:
 	world.add_child(camera)
 	camera.make_current()
 	listener = AudioListener2D.new()
-	listener.listen_to_audio_bus = 1
+	listener.make_current()
 	camera.add_child(listener)
 
 
