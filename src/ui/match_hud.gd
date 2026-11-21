@@ -329,10 +329,10 @@ func _tick_vitals(_delta: float) -> void:
 		if n > 0:
 			gadgets.append("%s x%d" % [str(Db.WEAPONS.get(g, {}).get("short", g)), n])
 	gadget_label.text = "  ".join(gadgets)
-	# crosshair spread
-	var sw: Dictionary = p.weapon_stats()
-	crosshair.spread = p.current_accuracy_spread() * 1.5
-	crosshair.show = not p.downed and not p.dead
+	# crosshair spread (the node exists only after _ready built the HUD)
+	if crosshair != null and is_instance_valid(crosshair):
+		crosshair.spread = p.current_accuracy_spread() * 1.5
+		crosshair.show = not p.downed and not p.dead
 	_aim_world = p.global_position
 
 

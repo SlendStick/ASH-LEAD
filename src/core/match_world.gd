@@ -555,6 +555,13 @@ func _spawn_net_actor(row: Dictionary) -> Actor:
 	actors.append(node)
 	node.world = self
 	node.map = map
+	# The client never runs a loadout pass, but it still draws the actor and,
+	# for the local player, reads hp/mag out of it. Baseline stats + the pistol
+	# keep the rig and the vitals panel sane until the first snapshot lands.
+	node.setup_stats([])
+	node.add_weapon("pm9")
+	node.equip_weapon("pm9")
+	node.money = 0
 	node.set_outfit(node.skin_outfit)
 	if node == local_actor:
 		if hud != null:

@@ -526,6 +526,83 @@ def check_input_actions():
                             report(p, i, "MISSING-ACTION", act, line)
 
 
+def check_ready_only_members():
+    """The crash that killed the first real run:
+
+        local_actor = ActorPlayer.new()
+        local_actor.configure(...)    # touches `visual`
+        actors_root.add_child(local_actor)
+
+    `visual` is built in `_ready()`, which only runs on add_child, so the call
+    hit a Nil. Detect the shape: a method called on a node *before* add_child
+    that (directly or one level down) touches a member created in `_ready()`.
+    """
+    cls_file = {}
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            path = os.path.join(root, fn)
+            text = read(path)
+            m = re.search(r"^class_name\s+(\w+)", text, re.M)
+            if m:
+                cls_file[m.group(1)] = path
+
+    ready_only = {}   # file -> {member}
+    touches = {}      # (file, func) -> {member}
+    for cls, path in cls_file.items():
+        text = read(path)
+        lines = text.split("\n")
+        mine = set()
+        assigned = {}
+        cur = ""
+        for line in lines:
+            fm = re.match(r"^(?:static\s+)?func\s+(\w+)", line)
+            if fm:
+                cur = fm.group(1)
+            for name in re.findall(r"^var\s+(\w+)\s*:\s*[A-Z]\w*\s*$", text, re.M):
+                if re.match(r"^\s*%s\s*=" % name, line):
+                    assigned.setdefault(name, set()).add(cur)
+        for name, where in assigned.items():
+            if where == {"_ready"}:
+                mine.add(name)
+        ready_only[path] = mine
+        cur = ""
+        for line in lines:
+            fm = re.match(r"^(?:static\s+)?func\s+(\w+)", line)
+            if fm:
+                cur = fm.group(1)
+                continue
+            for name in mine:
+                if re.search(r"\b%s\.\w" % name, line):
+                    touches.setdefault((path, cur), set()).add(name)
+
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            path = os.path.join(root, fn)
+            lines = read(path).split("\n")
+            for i, line in enumerate(lines):
+                m = re.search(r"\b(\w+)\s*(?::=|=\s*)\s*(\w+)\.new\(\)", line)
+                if not m:
+                    continue
+                var, cls = m.group(1), m.group(2)
+                target = cls_file.get(cls)
+                if target is None:
+                    continue
+                for j in range(i + 1, min(i + 30, len(lines))):
+                    if re.search(r"add_child\(\s*%s\s*\)" % var, lines[j]):
+                        break
+                    for call in re.finditer(r"\b%s\.(\w+)\(" % var, lines[j]):
+                        meth = call.group(1)
+                        bad = touches.get((target, meth), set())
+                        if bad:
+                            report(path, j + 1, "PRE-READY-CALL",
+                                   "%s.%s() -> %s" % (cls, meth, sorted(bad)),
+                                   lines[j].strip())
+
+
 def check_project_godot():
     path = os.path.join(ROOT, "project.godot")
     if not os.path.exists(path):
@@ -561,6 +638,7 @@ def main():
     check_data_refs()
     check_perk_table()
     check_input_actions()
+    check_ready_only_members()
     check_project_godot()
 
     if problems:

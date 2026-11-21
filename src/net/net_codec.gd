@@ -156,4 +156,8 @@ static func apply_actor(a, row: Dictionary) -> void:
 	a.aiming = bool(int(row.get("am", 0)))
 	var wid := str(row.get("w", a.current_weapon))
 	if wid != a.current_weapon:
+		# keep the rig and the ammo readout in sync with the host's weapon
 		a.current_weapon = wid
+		if a.visual != null and is_instance_valid(a.visual):
+			a.visual.weapon_id = wid
+			a.visual.queue_redraw()

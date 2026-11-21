@@ -119,15 +119,34 @@ var revenge_target := 0
 func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 1 | 8
+	_ensure_body()
+	_ensure_visual()
+	set_physics_process(true)
+
+
+## Spawners call configure()/set_outfit() *before* the actor enters the tree, so
+## every visual access has to tolerate the rig not existing yet. These two
+## builders are idempotent: _ready() reuses whatever configure() already made.
+func _ensure_body() -> void:
+	if body_shape != null and is_instance_valid(body_shape):
+		return
 	body_shape = CollisionShape2D.new()
 	var shape := CircleShape2D.new()
 	shape.radius = 15.0
 	body_shape.shape = shape
 	add_child(body_shape)
+
+
+func _ensure_visual() -> ActorVisual:
+	if visual != null and is_instance_valid(visual):
+		return visual
 	visual = ActorVisual.new()
 	visual.name = "Visual"
+	visual.team = team
+	visual.is_bot = is_bot
+	visual.weapon_id = current_weapon
 	add_child(visual)
-	set_physics_process(true)
+	return visual
 
 
 func configure(id: int, actor_name: String, team_id: int, bot: bool) -> void:
@@ -135,14 +154,15 @@ func configure(id: int, actor_name: String, team_id: int, bot: bool) -> void:
 	a_name = actor_name
 	team = team_id
 	is_bot = bot
-	visual.team = team_id
-	visual.is_bot = bot
-	visual.queue_redraw()
+	var v := _ensure_visual()
+	v.team = team_id
+	v.is_bot = bot
+	v.queue_redraw()
 
 
 func set_outfit(outfit: String) -> void:
 	skin_outfit = outfit
-	visual.setup(team, outfit)
+	_ensure_visual().setup(team, outfit)
 
 
 func setup_stats(perk_ids: Array = []) -> void:
@@ -170,15 +190,16 @@ func equip_weapon(weapon_id: String) -> void:
 	if not Db.WEAPONS.has(weapon_id):
 		return
 	current_weapon = weapon_id
-	visual.weapon_id = weapon_id
+	var v := _ensure_visual()
+	v.weapon_id = weapon_id
 	var w: Dictionary = Db.WEAPONS[weapon_id]
 	mag = int(w.get("mag", 1))
 	reserve = int(w.get("reserve", 0))
-	visual.suppressed = bool(w.get("suppressed", false))
+	v.suppressed = bool(w.get("suppressed", false))
 	draw_timer = float(w.get("draw", 0.25))
 	reload_timer = 0.0
 	fire_cooldown = 0.0
-	visual.queue_redraw()
+	v.queue_redraw()
 
 
 func add_weapon(weapon_id: String) -> void:
