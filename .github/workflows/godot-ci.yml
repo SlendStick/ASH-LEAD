@@ -75,6 +75,18 @@ jobs:
             exit 1
           fi
 
+      - name: Load every GDScript
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --script res://tools/load_all.gd 2>&1 | tee /tmp/load_all.log
+          grep -E "^LOAD_FAIL|^LOAD_NOINSTANCE" /tmp/load_all.log | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          if grep -qE "^LOAD_FAIL|^LOAD_NOINSTANCE" /tmp/load_all.log; then
+            exit 1
+          fi
+
       - name: Load project and scenes
         run: |
           set -e
