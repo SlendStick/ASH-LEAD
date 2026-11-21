@@ -56,6 +56,8 @@ var wander_pause := 0.0
 var work_spot := Vector2.ZERO
 var last_scream := 0.0
 var hostage_of := 0
+## Set by modes (hostage / extraction): follow this actor as a captive.
+var follower_target: Actor = null
 var afraid_of: Actor = null
 
 
@@ -93,11 +95,60 @@ func _physics_process(delta: float) -> void:
 	call_cooldown = maxf(0.0, call_cooldown - delta)
 	talk_cooldown = maxf(0.0, talk_cooldown - delta)
 	repath = maxf(0.0, repath - delta)
+	_tick_escort(delta)
 	_perceive(delta)
 	_update_emotions(delta)
 	_decide(delta)
 	_move(delta)
 	_express(delta)
+
+
+## Entry point used by Actor.tick_interact (same contract as Door.interact).
+func interact(by: Actor) -> void:
+	if by == null or actor.world == null:
+		return
+	if actor.get_meta("escort_id", 0) != 0:
+		actor.world.call("release_civilian", by, actor)
+		return
+	var as_hostage := bool(actor.get_meta("hostage", false)) and by.team == Db.TEAM_CRIMINAL
+	actor.world.call("grab_civilian", by, actor, as_hostage)
+
+
+## Called by the hostage/grab interaction: this civilian gives up and follows.
+func be_grabbed(by: Actor, follow: bool = true) -> void:
+	state = STATE_SURRENDER if not follow else STATE_FOLLOW
+	state_time = 0.0
+	hostage_of = by.a_id
+	actor.is_hostage = true
+	if follow:
+		follower_target = by
+	actor.speed_mult = 1.0
+	_bark("surrender")
+
+
+## A hostage / witness escorted by a gunman follows their captor. The mode sets
+## follower_target; the civilian trails a step behind and breaks into a run if
+## the gap grows, so escorting a witness across the map actually works.
+func _tick_escort(_delta: float) -> void:
+	if follower_target == null:
+		return
+	if not is_instance_valid(follower_target) or follower_target.dead:
+		follower_target = null
+		if state == STATE_FOLLOW:
+			state = STATE_FLEE
+		return
+	state = STATE_FOLLOW
+	state_time = 0.0
+	var behind := follower_target.global_position - Vector2(cos(follower_target.facing), sin(follower_target.facing)) * 46.0
+	target_point = behind
+	var gap := actor.global_position.distance_to(behind)
+	if gap > 420.0:
+		# the captor left them behind: run straight at them
+		target_point = follower_target.global_position
+		gap = actor.global_position.distance_to(target_point)
+	actor.sprinting = gap > 130.0
+	if not actor.is_hostage:
+		actor.speed_mult = 1.18 if actor.sprinting else 1.0
 
 
 func _perceive(delta: float) -> void:
@@ -489,11 +540,18 @@ func surrender_to(attacker: Actor) -> void:
 	actor.visual.queue_redraw()
 
 
+## Escort ended: the civilian is free again. Also used when a surrendered
+## civilian is left alone (hands come down and they look for cover).
 func release() -> void:
-	if state == STATE_SURRENDER:
-		state = STATE_HIDE
-		actor.visual.surrendering = false
-		actor.visual.queue_redraw()
+	hostage_of = 0
+	actor.is_hostage = false
+	follower_target = null
+	actor.speed_mult = 1.0
+	actor.visual.surrendering = false
+	actor.visual.queue_redraw()
+	if state == STATE_SURRENDER or state == STATE_FOLLOW:
+		state = STATE_FLEE
+		state_time = 0.0
 
 
 func get_witness_report() -> Array:

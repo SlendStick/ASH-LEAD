@@ -26,6 +26,7 @@ func setup_objectives() -> void:
 		vip.max_hp = 80.0
 		vip.hp = 80.0
 		vip.ai.set("personality", "coward")
+		vip.ai.set("mode_role", "vip")
 		Signals.hostage_state.emit(vip.a_id, "vip")
 	exit_node = spawn_objective(ObjectiveNode.Kind.EXIT, map.points.get("extract", map.world_size() * 0.5), "ФУРГОН", Color("2bff9a"), Db.TEAM_CRIMINAL)
 	police_exit = spawn_objective(ObjectiveNode.Kind.EXIT, map.points.get("security_room", map.world_size() * 0.3), "УЧАСТОК", Color("35c9ff"), Db.TEAM_POLICE)
@@ -63,7 +64,7 @@ func tick_mode(delta: float) -> void:
 	if closest_pol != null and pd < cd:
 		handler = closest_pol
 	if handler != null and handler.global_position.distance_to(vip.global_position) < 200.0:
-		vip.ai.set("target_point", handler.global_position)
+		vip.ai.set("follower_target", handler)
 		vip.ai.set("state", "follow")
 		if closest_crim == null and closest_pol != null:
 			escort_carrier = closest_pol

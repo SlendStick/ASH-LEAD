@@ -244,6 +244,7 @@ func _spawn_everyone() -> void:
 		for i in range(3):
 			var h := _spawn_civilian(["office", "student"], i + 100, true)
 			h.set_meta("hostage", true)
+			h.is_hostage = true
 
 
 func _outfit_for(mode_data: Dictionary, team: int, family: String) -> String:
@@ -415,8 +416,8 @@ func _build_camera() -> void:
 	cam.name = "Camera"
 	cam.limit_left = 0
 	cam.limit_top = 0
-	cam.limit_right = map.w * GeneratedMap.TILE
-	cam.limit_bottom = map.h * GeneratedMap.TILE
+	cam.limit_right = int(map.bounds.size.x if map.bounds.size.x > 0.0 else map.w * GeneratedMap.TILE)
+	cam.limit_bottom = int(map.bounds.size.y if map.bounds.size.y > 0.0 else map.h * GeneratedMap.TILE)
 	cam.position = local_actor.global_position if local_actor != null else map.world_size() * 0.5
 	cam.position_smoothing_enabled = true
 	cam.position_smoothing_speed = 9.0
@@ -1157,6 +1158,75 @@ func on_civilian_call(pos: Vector2) -> void:
 		mode.call("on_alarm", 2)
 
 
+## Nearest civilian this actor can grab or release (hostage escort, witness
+## escort). Returns null when there is nothing within arm's reach.
+func _find_grabbable(a: Actor) -> Variant:
+	if a.team == Db.TEAM_CIVILIAN or a.dead:
+		return null
+	# already escorting someone -> offer release
+	if a.get_meta("escort_id", 0) != 0:
+		var cur: Actor = _actor_by_id(int(a.get_meta("escort_id", 0)))
+		if cur != null and not cur.dead:
+			return {"node": cur, "kind": "release_hostage", "text": "Отпустить [E]", "time": 0.5}
+		a.set_meta("escort_id", 0)
+	var best: Actor = null
+	var best_d := 62.0
+	for c in actors:
+		if c == null or c.is_civilian == false or c.dead:
+			continue
+		if c.get_meta("rescued", false):
+			continue
+		if c.get_meta("escort_id", 0) != 0:
+			continue
+		var d := c.global_position.distance_to(a.global_position)
+		if d < best_d:
+			best_d = d
+			best = c
+	if best == null:
+		return null
+	var is_held := bool(best.get_meta("hostage", false))
+	if is_held:
+		return {"node": best, "kind": "grab_hostage", "text": "Взять заложника [E]", "time": 1.1}
+	if best.downed or best.get_meta("surrender", false) or a.team == Db.TEAM_POLICE:
+		return {"node": best, "kind": "arrest_civilian", "text": "Задержать [E]", "time": 1.4}
+	return null
+
+
+## Called by Actor.tick_interact -> CivActor.interact().
+func grab_civilian(by: Actor, civil: Actor, as_hostage: bool) -> void:
+	if by == null or civil == null or civil.dead:
+		return
+	by.set_meta("escort_id", civil.a_id)
+	civil.set_meta("escort_id", by.a_id)
+	if civil.ai != null and civil.ai.has_method("be_grabbed"):
+		civil.ai.call("be_grabbed", by, true)
+	if as_hostage:
+		civil.set_meta("hostage", true)
+		civil.set_meta("hostage_state", "held")
+		Signals.hostage_state.emit(civil.a_id, "held")
+		Signals.match_event.emit("ЗАЛОЖНИК ВЗЯТ", Color("ff2bd6"), "hostage")
+	else:
+		Signals.match_event.emit("ГРАЖДАНСКИЙ ЗАДЕРЖАН", Color("35c9ff"), "arrest")
+	by.score += 25
+
+
+func release_civilian(by: Actor, civil: Actor) -> void:
+	if civil == null:
+		return
+	civil.set_meta("escort_id", 0)
+	if by != null:
+		by.set_meta("escort_id", 0)
+	if civil.ai != null and civil.ai.has_method("release"):
+		civil.ai.call("release")
+	Signals.hostage_state.emit(civil.a_id, "released")
+
+
+## Friendly fire is a match setting: modes like deathmatch keep it off so teams
+## stay readable, custom lobbies can turn it on (and every damage path honours it).
+func friendly_fire_enabled() -> bool:
+	return bool(cfg.get("friendly_fire", friendly_fire))
+
+
 func raise_alarm(level: int, reason: String) -> void:
 	if level <= alarm_level:
 		return
@@ -1520,6 +1590,10 @@ func find_interactable(a: Actor) -> Variant:
 		if dist < best_d:
 			best_d = dist
 			best_door = d
+	# hostages / witnesses: grab a civilian who already has their hands up
+	var grab := _find_grabbable(a)
+	if grab != null:
+		return grab
 	if best_door != null:
 		if best_door.locked:
 			if a.loadout.has("ksg") or a.loadout.has("breach_kit") or a.team == Db.TEAM_POLICE:

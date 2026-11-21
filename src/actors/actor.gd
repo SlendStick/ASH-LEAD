@@ -23,6 +23,7 @@ var a_name := "ACTOR"
 var team := Db.TEAM_CRIMINAL
 var is_bot := false
 var is_civilian := false
+var is_hostage := false
 var is_local_player := false
 
 # --- vital stats -----------------------------------------------------------

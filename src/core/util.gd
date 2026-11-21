@@ -43,9 +43,7 @@ static func los_clear_fast(map: GeneratedMap, from: Vector2, to: Vector2) -> boo
 	var inv := 1.0 / float(steps)
 	for i in range(1, steps):
 		var p := from + delta * (float(i) * inv)
-		var c := map.world_to_cell(p)
-		var t := map.tile_at(c)
-		if t == GeneratedMap.TK_WALL or t == GeneratedMap.TK_VOID or t == GeneratedMap.TK_WINDOW:
+		if map.opaque_at(map.world_to_cell(p)):
 			return false
 	return true
 

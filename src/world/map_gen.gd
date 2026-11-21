@@ -66,6 +66,8 @@ static func generate(theme_id: String, seed_value: int, mode_id: String) -> Gene
 	_place_objectives(gm, rng)
 	_build_cover(gm)
 	_make_patrols(gm, rng)
+	gm.build_caches()
+	gm.compute_bounds()
 	return gm
 
 

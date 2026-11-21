@@ -177,6 +177,7 @@ func set_tile_solid(cell: Vector2i, solid: bool) -> void:
 	else:
 		if t == GeneratedMap.TK_WALL:
 			map.set_tile_cell(cell, GeneratedMap.TK_DOOR)
+	map.refresh_cell(cell)
 	_build_physics_bounds()
 
 

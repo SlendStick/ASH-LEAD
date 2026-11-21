@@ -316,6 +316,54 @@ def check_file(path):
             report(path, i, "BAD-THEME-PROP", "Label has no shadow_outline_size")
 
 
+def check_world_contract():
+    """Modes talk to MatchWorld through world.call/get("name"). Those strings are
+    invisible to the parser, so validate them against the class itself."""
+    world_path = os.path.join(SRC, "core", "match_world.gd")
+    if not os.path.exists(world_path):
+        return
+    text = read(world_path)
+    members = set(re.findall(r"^(?:static\s+)?func\s+(\w+)", text, re.M))
+    members |= set(re.findall(r"^(?:@onready\s+)?var\s+(\w+)", text, re.M))
+    members |= set(re.findall(r"^(?:static\s+)?const\s+(\w+)", text, re.M))
+    members |= set(re.findall(r"^signal\s+(\w+)", text, re.M))
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            path = os.path.join(root, fn)
+            body = read(path)
+            for i, line in enumerate(body.split("\n"), 1):
+                if line.strip().startswith("#"):
+                    continue
+                for m in re.finditer(r'\bworld\.(?:call|get)\(\s*"(\w+)"', line):
+                    if m.group(1) not in members:
+                        report(path, i, "WORLD-CONTRACT", "world has no " + m.group(1), line)
+                for m in re.finditer(r'\bworld\.set\(\s*"(\w+)"', line):
+                    if m.group(1) not in members:
+                        report(path, i, "WORLD-CONTRACT", "world has no " + m.group(1), line)
+
+
+def check_project_godot():
+    path = os.path.join(ROOT, "project.godot")
+    if not os.path.exists(path):
+        report(path, 0, "MISSING-FILE", "project.godot")
+        return
+    text = read(path)
+    for m in re.finditer(r'^\w+="(res://[^"]+)"', text, re.M):
+        target = m.group(1)
+        if not os.path.exists(os.path.join(ROOT, target.replace("res://", ""))):
+            report(path, 0, "MISSING-PATH", target)
+    for m in re.finditer(r'^\w+\s*=\s*"(\w+)"', text, re.M):
+        pass
+    # autoloads referenced in the [autoload] section must exist
+    section = re.search(r"\[autoload\](.*?)(\n\[|$)", text, re.S)
+    if section:
+        for m in re.finditer(r'^(\w+)="(res://[^"]+)"', section.group(1), re.M):
+            if not os.path.exists(os.path.join(ROOT, m.group(2).replace("res://", ""))):
+                report(path, 0, "MISSING-AUTOLOAD", "%s -> %s" % (m.group(1), m.group(2)))
+
+
 def main():
     files = []
     for root, _dirs, names in os.walk(SRC):
@@ -324,6 +372,8 @@ def main():
                 files.append(os.path.join(root, fn))
     for path in files:
         check_file(path)
+    check_world_contract()
+    check_project_godot()
 
     if problems:
         for rel, line, kind, detail, ctx in problems:

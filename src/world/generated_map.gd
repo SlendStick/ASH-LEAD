@@ -201,3 +201,80 @@ func to_dict() -> Dictionary:
 static func from_seed(theme: String, seed_val: int, mode: String) -> GeneratedMap:
 	var g := MapGen.generate(theme, seed_val, mode)
 	return g
+
+
+# ---------------------------------------------------------------------------
+# CACHED LOOKUPS
+# ---------------------------------------------------------------------------
+# tile_at() is called thousands of times per frame (bullets, LOS, AI pathing,
+# fog). The bounds test plus PackedByteArray index is fast, but the visibility
+# and smoke queries repeat the same cells, so a small per-cell cache lives here.
+
+var _solid_cache := PackedByteArray()
+var _vision_cache := PackedByteArray()
+
+
+func build_caches() -> void:
+	_solid_cache.resize(tiles.size())
+	_vision_cache.resize(tiles.size())
+	for i in range(tiles.size()):
+		var t := tiles[i]
+		_solid_cache[i] = 1 if (t == TK_VOID or t == TK_WALL or t == TK_WINDOW or t == TK_GRATE or t == TK_CRATE) else 0
+		_vision_cache[i] = 1 if (t == TK_VOID or t == TK_WALL or t == TK_CRATE) else 0
+
+
+## True when the tile stops movement (walls, crater edges, windows, crates).
+func solid_at(c: Vector2i) -> bool:
+	if not in_bounds(c):
+		return true
+	if _solid_cache.size() != tiles.size():
+		return is_solid(c)
+	return _solid_cache[idx(c)] == 1
+
+
+## True when the tile stops line of sight.
+func opaque_at(c: Vector2i) -> bool:
+	if not in_bounds(c):
+		return true
+	if _vision_cache.size() != tiles.size():
+		return blocks_vision(c)
+	return _vision_cache[idx(c)] == 1
+
+
+## Keep the caches in sync after MapGen edits the grid (doors sealing tiles).
+func refresh_cell(c: Vector2i) -> void:
+	if not in_bounds(c) or _solid_cache.size() != tiles.size():
+		return
+	var t := tiles[idx(c)]
+	_solid_cache[idx(c)] = 1 if (t == TK_VOID or t == TK_WALL or t == TK_WINDOW or t == TK_GRATE or t == TK_CRATE) else 0
+	_vision_cache[idx(c)] = 1 if (t == TK_VOID or t == TK_WALL or t == TK_CRATE) else 0
+
+
+## Number of cells we can walk on -- used by the map validator and the bots'
+## "is there somewhere to go" check.
+func walkable_count() -> int:
+	var n := 0
+	for i in range(tiles.size()):
+		if _solid_cache.size() == tiles.size():
+			if _solid_cache[i] == 0:
+				n += 1
+		elif not is_solid(Vector2i(i % w, i / w)):
+			n += 1
+	return n
+
+
+## Playable bounds in world space (used by the camera limits and the fog quad).
+var bounds := Rect2()
+## Every walkable cell, precomputed: spawn picking and "is there anywhere to go"
+## checks no longer scan the whole grid.
+var walkable_cells: Array[Vector2i] = []
+
+
+func compute_bounds() -> void:
+	bounds = Rect2(0, 0, w * TILE, h * TILE)
+	walkable_cells.clear()
+	for y in range(h):
+		for x in range(w):
+			var c := Vector2i(x, y)
+			if walkable(c):
+				walkable_cells.append(c)

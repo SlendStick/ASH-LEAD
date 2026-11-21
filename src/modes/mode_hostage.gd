@@ -39,6 +39,17 @@ func tick_mode(delta: float) -> void:
 			breach_started = true
 			world.call("raise_alarm", 2, "переговоры провалились")
 			announce("ПЕРЕГОВОРЫ ПРОВАЛЕНЫ. ШТУРМ.", Color("1d6bff"))
+	# a criminal who grabs a hostage drags them towards their own exit; the mode
+	# keeps the escort goal alive so the mechanic has a payoff
+	for h in hostages:
+		if h.dead:
+			continue
+		var escort_id := int(h.get_meta("escort_id", 0))
+		if escort_id == 0:
+			continue
+		var captor = world.call("actor_by_id", escort_id)
+		if captor == null or captor.dead:
+			world.call("release_civilian", null, h)
 	# hostages escape when reaching the police exit with a cop nearby
 	for h in hostages:
 		if h.dead or h.get_meta("rescued", false):
