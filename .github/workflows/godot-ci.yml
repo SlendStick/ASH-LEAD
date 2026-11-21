@@ -50,11 +50,21 @@ jobs:
           chmod +x /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64
           /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64 --version
 
+      - name: Import project (build class cache)
+        run: |
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --import > /tmp/import.log 2>&1 || true
+          echo "===== IMPORT LOG ====="
+          cat /tmp/import.log
+          echo "===== CLASS CACHE ====="
+          cat .godot/global_script_class_cache.cfg 2>/dev/null || echo "(no class cache)"
+
       - name: Load every GDScript
         run: |
           set -e
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
-          $GODOT --headless --path . --script res://tools/load_all.gd 2>&1 | tee /tmp/load_all.log
+          $GODOT --headless --path . --script res://tools/load_all.gd > /tmp/load_all.log 2>&1 || true
+          cat /tmp/load_all.log
           awk '/^SCRIPT ERROR:|^ERROR:/{blk=NR} {lines[NR]=$0} END{
             for (i=1;i<=NR;i++) {
               if (lines[i] ~ /^SCRIPT ERROR:|^ERROR:/) {
@@ -70,29 +80,8 @@ jobs:
             echo "script load failures detected"
             exit 1
           fi
-
-      - name: Import project resources
-        run: |
-          set -e
-          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
-          $GODOT --headless --path . --import 2>&1 | tee /tmp/import.log
-          echo "===== RAW IMPORT LOG ====="
-          cat /tmp/import.log
-          echo "===== END RAW IMPORT LOG ====="
-          if grep -q "SCRIPT ERROR" /tmp/import.log || grep -q "Parse Error" /tmp/import.log; then
-            echo "import step reported script errors"
-            # Each Godot error block is 3 lines: blank, "SCRIPT ERROR: ...", location.
-            awk '/^SCRIPT ERROR:|^ERROR:/{blk=NR} {lines[NR]=$0} END{
-              for (i=1;i<=NR;i++) {
-                if (lines[i] ~ /^SCRIPT ERROR:|^ERROR:/) {
-                  print "::error::" lines[i]
-                  for (j=i+1;j<=NR && j<i+4;j++) {
-                    if (lines[j] ~ /^SCRIPT ERROR:|^ERROR:/) break
-                    print "::error::" lines[j]
-                  }
-                }
-              }
-            }' /tmp/import.log
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/import.log; then
+            echo "import reported script errors"
             exit 1
           fi
 
@@ -100,9 +89,10 @@ jobs:
         run: |
           set -e
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
-          $GODOT --headless --path . --script res://tools/validate.gd 2>&1 | tee /tmp/validate.log
-          if grep -q "SCRIPT ERROR" /tmp/validate.log || grep -q "Parse Error" /tmp/validate.log; then
-            grep -E "SCRIPT ERROR|Parse Error|ERROR|VALIDATION_FAIL" /tmp/validate.log | head -30 | while IFS= read -r line; do
+          $GODOT --headless --path . --script res://tools/validate.gd > /tmp/validate.log 2>&1 || true
+          cat /tmp/validate.log
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/validate.log; then
+            grep -E "SCRIPT ERROR|Parse Error|VALIDATION_FAIL" /tmp/validate.log | head -30 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1
@@ -113,9 +103,10 @@ jobs:
         run: |
           set -e
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
-          ASH_AUTOTEST=1 $GODOT --headless --path . --script res://tools/autotest.gd 2>&1 | tee /tmp/autotest.log
-          if grep -q "SCRIPT ERROR" /tmp/autotest.log || grep -q "Parse Error" /tmp/autotest.log; then
-            grep -E "SCRIPT ERROR|Parse Error|ERROR|AUTOTEST_FAIL" /tmp/autotest.log | head -30 | while IFS= read -r line; do
+          ASH_AUTOTEST=1 $GODOT --headless --path . --script res://tools/autotest.gd > /tmp/autotest.log 2>&1 || true
+          cat /tmp/autotest.log
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/autotest.log; then
+            grep -E "SCRIPT ERROR|Parse Error|AUTOTEST_FAIL" /tmp/autotest.log | head -30 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1
