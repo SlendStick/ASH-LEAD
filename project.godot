@@ -1,0 +1,157 @@
+; ASH&LEAD -- neon-noir multiplayer tactical shooter
+; Godot 4.3+ project file
+
+config_version=5
+
+[application]
+
+config/name="ASH&LEAD"
+config/description="Neon-noir multiplayer tactical crime shooter. Criminals vs Law. Hotline Miami meets Counter-Strike and PAYDAY."
+run/main_scene="res://scenes/boot.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.02, 0.01, 0.04, 1)
+boot_splash/show_image=false
+
+[audio]
+
+buses/default_bus_layout="res://assets/bus_layout.tres"
+
+[autoload]
+
+Signals="*res://src/autoload/signals.gd"
+Db="*res://src/autoload/db.gd"
+NetLink="*res://src/autoload/net_link.gd"
+Sfx="*res://src/autoload/sfx.gd"
+GameFlow="*res://src/autoload/game_flow.gd"
+Ui="*res://src/autoload/ui_layer.gd"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/size/window_width_override=1440
+window/size/window_height_override=810
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/vsync/vsync_mode=1
+window/handheld/orientation=1
+
+[input]
+
+move_up={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":87,"unicode":0), Object(InputEventKey,"physical_keycode":4194320,"unicode":0)]
+}
+move_down={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":83,"unicode":0), Object(InputEventKey,"physical_keycode":4194322,"unicode":0)]
+}
+move_left={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":65,"unicode":0), Object(InputEventKey,"physical_keycode":4194319,"unicode":0)]
+}
+move_right={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":68,"unicode":0), Object(InputEventKey,"physical_keycode":4194321,"unicode":0)]
+}
+sprint={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":4194325,"unicode":0)]
+}
+crouch={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":4194326,"unicode":0)]
+}
+interact={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":69,"unicode":0)]
+}
+reload={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":82,"unicode":0)]
+}
+fire={
+"deadzone": 0.15,
+"events": [Object(InputEventMouseButton,"button_index":1), Object(InputEventKey,"physical_keycode":32,"unicode":0)]
+}
+aim={
+"deadzone": 0.15,
+"events": [Object(InputEventMouseButton,"button_index":2)]
+}
+melee={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":86,"unicode":0)]
+}
+gadget={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":71,"unicode":0)]
+}
+swap_weapon={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":88,"unicode":0)]
+}
+drop_weapon={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":78,"unicode":0)]
+}
+flashlight={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":70,"unicode":0)]
+}
+command={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":67,"unicode":0)]
+}
+ping={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":77,"unicode":0)]
+}
+buy={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":66,"unicode":0)]
+}
+possess={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":81,"unicode":0)]
+}
+scoreboard={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":4194306,"unicode":0)]
+}
+pause={
+"deadzone": 0.15,
+"events": [Object(InputEventKey,"physical_keycode":4194305,"unicode":0)]
+}
+
+[layer_names]
+
+2d_physics/layer_1="world"
+2d_physics/layer_2="actors"
+2d_physics/layer_3="bullets"
+2d_physics/layer_4="interactables"
+2d_physics/layer_5="vision"
+2d_physics/layer_6="triggers"
+
+[physics]
+
+common/physics_ticks_per_second=60
+2d/default_gravity=0.0
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.017, 0.011, 0.035, 1)
+2d/snap/snap_2d_transforms_to_pixel=false
+anti_aliasing/quality/msaa_2d=0
+
+[debug]
+
+gdscript/warnings/untyped_declaration=0
+gdscript/warnings/unsafe_property_access=0
+gdscript/warnings/unsafe_method_access=0
+gdscript/warnings/unsafe_call_argument=0
+gdscript/warnings/integer_division=0
+gdscript/warnings/narrowing_conversion=0

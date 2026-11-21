@@ -1,0 +1,42 @@
+extends Node
+## ASH&LEAD -- global event bus.
+##
+## Every subsystem talks through this node instead of holding hard references to
+## the others. This makes it possible to swap the local "solo + bots" match for a
+## listen-server/relay match without touching gameplay code.
+
+signal shot_fired(shooter_id: int, origin: Vector2, dir: Vector2, weapon_id: String)
+signal impact(pos: Vector2, normal: Vector2, kind: String)
+signal noise_made(pos: Vector2, radius: float, kind: String, team: int)
+signal actor_died(victim_id: int, killer_id: int, weapon_id: String, headshot: bool, tags: Array)
+signal actor_downed(victim_id: int, attacker_id: int)
+signal actor_revived(actor_id: int, reviver_id: int)
+signal actor_spotted(actor_id: int, spotter_id: int, team: int)
+signal hit_confirmed(is_kill: bool, headshot: bool, team: int)
+signal damage_number(pos: Vector2, amount: float, kind: String)
+signal alarm_changed(level: int, reason: String)
+signal police_arrival(seconds_left: float)
+signal match_event(text: String, color: Color, icon: String)
+signal notify(text: String, kind: String)
+signal objective_changed(title: String, detail: String, progress: float)
+signal round_state_changed(state: int, round_index: int)
+signal score_changed(team: int, score: int)
+signal killfeed(entry: Dictionary)
+signal replay_ready(payload: Dictionary)
+signal ui_ping(pos: Vector2, kind: String)
+signal interact_prompt(text: String, visible: bool)
+signal camera_shake(strength: float, seconds: float)
+signal blood_spray(pos: Vector2, dir: Vector2, amount: float)
+signal shell_ejected(pos: Vector2, dir: Vector2)
+signal door_state(door_id: int, open: bool, locked: bool)
+signal hostage_state(id: int, state: String)
+signal bag_dropped(pos: Vector2, carrier_id: int)
+signal bot_order(bot_id: int, kind: String)
+signal possession_targets(list: Array)
+signal match_ended(summary: Dictionary)
+signal player_damaged(amount: float)
+signal actor_healed(actor_id: int, amount: float)
+signal objective_completed(objective_id: String, team: int)
+signal round_ended(winner_team: int, reason: String)
+signal settings_changed(section: String)
+signal network_stats(sent_kbps: float, recv_kbps: float, ping_ms: int)
