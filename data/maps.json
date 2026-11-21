@@ -1,0 +1,52 @@
+{
+  "maps": [
+    {
+      "id": "clinic", "name": "Городская клиника «Меридиан»", "theme": "clinic",
+      "size": [64, 48], "rooms": 9, "floor": "floor_tile", "wall": "wall",
+      "light_color": [0.55, 0.85, 0.8], "ambient": 0.32, "outside": false,
+      "props": ["reception", "bed", "locker", "desk", "plant", "bench", "vending", "server"],
+      "civilians": ["staff", "patient", "guard", "visitor"],
+      "desc": "Поздний час. Сине-зелёный свет приборов, дождь за окнами."
+    },
+    {
+      "id": "warehouse", "name": "Склад «Северный»", "theme": "warehouse",
+      "size": [72, 54], "rooms": 8, "floor": "floor_concrete", "wall": "wall_dark",
+      "light_color": [0.9, 0.8, 0.55], "ambient": 0.28, "outside": true,
+      "props": ["crate", "shelf", "shelf_long", "desk", "barrel", "dumpster", "car_blue", "bench"],
+      "civilians": ["worker", "guard", "cleaner"],
+      "desc": "Длинные ряды стеллажей и открытая погрузочная зона."
+    },
+    {
+      "id": "college", "name": "Техникум «Вектор» (после закрытия)", "theme": "college",
+      "size": [64, 48], "rooms": 10, "floor": "floor_wood", "wall": "wall",
+      "light_color": [0.75, 0.8, 0.95], "ambient": 0.3, "outside": false,
+      "props": ["desk", "bench", "locker", "gym_mat", "server", "bookshelf", "filing", "plant"],
+      "civilians": ["staff", "guard", "cleaner"],
+      "desc": "Закрытое учебное учреждение после эвакуации посетителей. Только взрослые сотрудники."
+    },
+    {
+      "id": "cinema", "name": "Кинотеатр «Аврора»", "theme": "cinema",
+      "size": [64, 48], "rooms": 9, "floor": "floor_carpet", "wall": "wall_dark",
+      "light_color": [0.85, 0.45, 0.75], "ambient": 0.26, "outside": true,
+      "props": ["cinema_rows", "stage", "popcorn", "sofa", "kiosk", "vending", "counter"],
+      "civilians": ["staff", "visitor", "guard"],
+      "desc": "Неоновый холл, тёмные залы, свет вывесок."
+    },
+    {
+      "id": "mall", "name": "Торговый центр «Галерея»", "theme": "mall",
+      "size": [76, 56], "rooms": 12, "floor": "floor_tile", "wall": "wall",
+      "light_color": [0.6, 0.8, 1.0], "ambient": 0.34, "outside": true,
+      "props": ["kiosk", "sofa", "plant", "vending", "atm", "counter", "bench", "car_blue"],
+      "civilians": ["visitor", "staff", "guard", "cleaner"],
+      "desc": "Атриум с длинным обзором и тесные торговые ряды."
+    },
+    {
+      "id": "archive", "name": "Муниципальный архив", "theme": "archive",
+      "size": [64, 48], "rooms": 10, "floor": "floor_concrete", "wall": "wall_dark",
+      "light_color": [0.6, 0.75, 0.85], "ambient": 0.28, "outside": false,
+      "props": ["archive_shelf", "filing", "desk", "server", "locker", "plant", "counter"],
+      "civilians": ["staff", "guard", "visitor"],
+      "desc": "Серый камень, синие экраны, зелёные индикаторы."
+    }
+  ]
+}

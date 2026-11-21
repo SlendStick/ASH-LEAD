@@ -1,0 +1,10 @@
+{
+  "civilians": [
+    {"id": "staff", "name": "Сотрудник учреждения", "sprite": "char_civ_1", "speed": 82, "confidence": 0.55, "help": 0.6},
+    {"id": "visitor", "name": "Посетитель", "sprite": "char_civ_2", "speed": 95, "confidence": 0.25, "help": 0.3},
+    {"id": "patient", "name": "Пациент", "sprite": "char_civ_3", "speed": 58, "confidence": 0.3, "help": 0.4},
+    {"id": "guard", "name": "Охранник", "sprite": "char_civ_4", "speed": 88, "confidence": 0.75, "help": 0.8},
+    {"id": "cleaner", "name": "Уборщик", "sprite": "char_civ_5", "speed": 78, "confidence": 0.4, "help": 0.5},
+    {"id": "worker", "name": "Работник", "sprite": "char_civ_6", "speed": 85, "confidence": 0.5, "help": 0.6}
+  ]
+}

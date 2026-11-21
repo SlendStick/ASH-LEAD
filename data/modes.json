@@ -1,0 +1,65 @@
+{
+  "modes": [
+    {
+      "id": "plant", "name": "Установка", "short": "Активируйте устройство или защитите зоны.",
+      "team_size": 5, "round_time": 120, "rounds_to_win": 4, "halves": true,
+      "respawn": false, "economy": true, "civilians": false, "category": "competitive",
+      "description": "Раундовый режим: преступники активируют вымышленное устройство в одной из двух зон, стражи — предотвращают активацию или отключают устройство. В середине матча стороны меняются."
+    },
+    {
+      "id": "heist", "name": "Налёт", "short": "Ограбление с задержкой прибытия полиции.",
+      "team_size": 5, "round_time": 240, "rounds_to_win": 1, "halves": false,
+      "respawn": false, "economy": false, "civilians": true, "category": "asymmetric",
+      "police_delay": 75,
+      "description": "Асимметричный режим: преступники находят цель, несут добычу и уходят; стражи прибывают с задержкой и пытаются остановить их."
+    },
+    {
+      "id": "hostage", "name": "Переговоры", "short": "Заложники, переговоры и спасение.",
+      "team_size": 5, "round_time": 210, "rounds_to_win": 1, "halves": false,
+      "respawn": false, "economy": false, "civilians": true, "category": "asymmetric",
+      "hostages": 3,
+      "description": "Одна сторона удерживает цель и заложников, стражи спасают людей и завершают кризис. Переговоры через меню реплик."
+    },
+    {
+      "id": "threshold", "name": "Порог", "short": "Захват и удержание зон здания.",
+      "team_size": 5, "round_time": 240, "rounds_to_win": 1, "halves": false,
+      "respawn": false, "economy": false, "civilians": true, "category": "asymmetric",
+      "zones": 3,
+      "description": "Преступники захватывают и удерживают несколько участков; стражи прибывают с задержкой и останавливают продвижение."
+    },
+    {
+      "id": "archive", "name": "Чёрный архив", "short": "Вынести ценный объект или перехватить его.",
+      "team_size": 5, "round_time": 200, "rounds_to_win": 1, "halves": false,
+      "respawn": false, "economy": false, "civilians": false, "category": "asymmetric",
+      "description": "Одна команда доставляет объект в точку эвакуации, другая перехватывает. Объект замедляет переносчика."
+    },
+    {
+      "id": "tdm", "name": "Командный бой насмерть", "short": "Быстрые респауны, лимит очков.",
+      "team_size": 5, "round_time": 300, "rounds_to_win": 1, "halves": false,
+      "respawn": true, "economy": false, "civilians": false, "category": "arcade",
+      "score_limit": 40,
+      "description": "Аркадный режим с быстрым возрождением. Засчитываются командные действия и помощь."
+    },
+    {
+      "id": "dm", "name": "Бой насмерть", "short": "Каждый сам за себя.",
+      "team_size": 1, "round_time": 240, "rounds_to_win": 1, "halves": false,
+      "respawn": true, "economy": false, "civilians": false, "category": "arcade",
+      "score_limit": 20,
+      "description": "Свободный аркадный режим без команд."
+    },
+    {
+      "id": "gunrace", "name": "Гонка вооружений", "short": "Оружие меняется по мере успехов.",
+      "team_size": 1, "round_time": 300, "rounds_to_win": 1, "halves": false,
+      "respawn": true, "economy": false, "civilians": false, "category": "arcade",
+      "score_limit": 15,
+      "description": "Каждое устранение переводит на следующий тип оружия. Финальный этап — особый."
+    },
+    {
+      "id": "domination", "name": "Захват точек", "short": "Удерживайте зоны и переходите дальше.",
+      "team_size": 5, "round_time": 300, "rounds_to_win": 1, "halves": false,
+      "respawn": true, "economy": false, "civilians": false, "category": "arcade",
+      "score_limit": 200,
+      "description": "Несколько зон поочерёдно становятся активными. Очки за удержание и своевременный переход."
+    }
+  ]
+}

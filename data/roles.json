@@ -1,0 +1,16 @@
+{
+  "roles": [
+    {"id": "observer", "name": "Наблюдатель", "icon": "icon_role_observer", "gadget": "camera",
+     "desc": "Отмечает замеченные угрозы и помогает сбору сведений. Не видит сквозь стены."},
+    {"id": "technician", "name": "Техник", "icon": "icon_role_technician", "gadget": "breach",
+     "desc": "Быстрее взаимодействует с игровыми устройствами и объектами миссии."},
+    {"id": "medic", "name": "Медик", "icon": "icon_role_medic", "gadget": "medkit",
+     "desc": "Может оказать ограниченную помощь раненому товарищу в режимах с восстановлением."},
+    {"id": "support", "name": "Поддержка", "icon": "icon_role_support", "gadget": "ammo",
+     "desc": "Несёт дополнительный запас снаряжения и помогает снабжению команды."},
+    {"id": "negotiator", "name": "Переговорщик", "icon": "icon_role_negotiator", "gadget": "radio",
+     "desc": "Лучше взаимодействует с гражданскими и снижает панику."},
+    {"id": "guardian", "name": "Охрана цели", "icon": "icon_role_guardian", "gadget": "armor",
+     "desc": "Снаряжение для защиты зоны, без повышенной меткости и здоровья."}
+  ]
+}

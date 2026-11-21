@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#0a0c12"/>
+  <rect x="8" y="8" width="112" height="112" rx="12" fill="none" stroke="#1de9b6" stroke-width="2" opacity="0.55"/>
+  <path d="M22 92 L64 24 L106 92 Z" fill="none" stroke="#e0335c" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="64" cy="70" r="12" fill="#1de9b6" opacity="0.9"/>
+  <rect x="58" y="78" width="12" height="26" rx="3" fill="#e0335c"/>
+  <text x="64" y="122" font-family="monospace" font-size="14" fill="#9fb3c8" text-anchor="middle">ASH&amp;LEAD</text>
+</svg>

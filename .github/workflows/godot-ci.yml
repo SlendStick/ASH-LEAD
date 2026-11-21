@@ -1,0 +1,113 @@
+name: Godot CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: godot-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Godot project
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install GDScript parser
+        run: pip install gdtoolkit
+
+      - name: Static parse of all GDScript files
+        run: |
+          set -e
+          ERR=0
+          while IFS= read -r f; do
+            if ! gdparse "$f" > /tmp/gdparse_out.txt 2>&1; then
+              echo "--- parse failure: $f"
+              cat /tmp/gdparse_out.txt
+              ERR=1
+            fi
+          done < <(find autoload scripts tools -name '*.gd' | sort)
+          if [ "$ERR" != "0" ]; then exit 1; fi
+          echo "GDScript parse: OK"
+
+      - name: Download Godot headless
+        run: |
+          set -e
+          GODOT_VER="4.7.2-stable"
+          curl -sL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VER}/Godot_v${GODOT_VER}_linux.x86_64.zip"
+          unzip -o -q /tmp/godot.zip -d /tmp/godot
+          chmod +x /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64
+          /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64 --version
+
+      - name: Import project (build class cache)
+        run: |
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --import > /tmp/import.log 2>&1 || true
+          echo "===== IMPORT LOG ====="
+          cat /tmp/import.log
+          echo "===== CLASS CACHE ====="
+          cat .godot/global_script_class_cache.cfg 2>/dev/null || echo "(no class cache)"
+
+      - name: Load every GDScript
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --script res://tools/load_all.gd > /tmp/load_all.log 2>&1 || true
+          cat /tmp/load_all.log
+          # One compact annotation: GitHub keeps only the first 10, so dedupe.
+          awk '/^### LOADING/{m=$0} /^SCRIPT ERROR:/{msg=$0; getline nxt; line=m " >>> " msg " || " nxt; if (!seen[line]++) print line}' /tmp/load_all.log \
+            | head -40 | tr '\n' ' ' > /tmp/digest.txt
+          if [ -s /tmp/digest.txt ]; then
+            echo "::error::GODOT_ERRORS $(cat /tmp/digest.txt)"
+          fi
+          if grep -qE "^LOAD_FAIL|^LOAD_NOINSTANCE" /tmp/load_all.log; then
+            echo "script load failures detected"
+            exit 1
+          fi
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/import.log; then
+            echo "import reported script errors"
+            exit 1
+          fi
+
+      - name: Load project and scenes
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --script res://tools/validate.gd > /tmp/validate.log 2>&1 || true
+          cat /tmp/validate.log
+          awk '/^SCRIPT ERROR:/{msg=$0; getline nxt; line=msg " || " nxt; if (!seen[line]++) print line}' /tmp/validate.log \
+            | head -25 | tr '\n' ' ' > /tmp/digest3.txt
+          if [ -s /tmp/digest3.txt ]; then
+            echo "::error::VALIDATE_ERRORS $(cat /tmp/digest3.txt)"
+          fi
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/validate.log; then
+            exit 1
+          fi
+          grep -q "VALIDATE_OK" /tmp/validate.log
+
+      - name: Headless smoke test (autotest)
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          ASH_AUTOTEST=1 $GODOT --headless --path . res://tools/autotest.tscn > /tmp/autotest.log 2>&1 || true
+          cat /tmp/autotest.log
+          awk '/^DIAG/{line=$0; if (!seen[line]++) print line; next} /^SCRIPT ERROR:|^ERROR:/{msg=$0; getline nxt; line=msg " || " nxt; if (!seen[line]++) print line}' /tmp/autotest.log \
+            | head -30 | tr '\n' ' ' > /tmp/digest2.txt
+          if [ -s /tmp/digest2.txt ]; then
+            echo "::error::AUTOTEST_ERRORS $(cat /tmp/digest2.txt)"
+          fi
+          if grep -qE "SCRIPT ERROR|Parse Error" /tmp/autotest.log; then
+            exit 1
+          fi
+          grep -q "AUTOTEST_OK" /tmp/autotest.log

@@ -1,0 +1,20 @@
+# Godot
+.godot/
+*.translation
+*.import
+android/build/
+android/.gradle/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Builds
+build/
+*.zip
+*.pck
+
+# Local user data (kept out of VCS)
+user_data/
