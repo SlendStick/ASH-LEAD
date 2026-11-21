@@ -50,6 +50,27 @@ jobs:
           chmod +x /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64
           /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64 --version
 
+      - name: Load every GDScript
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --script res://tools/load_all.gd 2>&1 | tee /tmp/load_all.log
+          awk '/^SCRIPT ERROR:|^ERROR:/{blk=NR} {lines[NR]=$0} END{
+            for (i=1;i<=NR;i++) {
+              if (lines[i] ~ /^SCRIPT ERROR:|^ERROR:/) {
+                print "::error::" lines[i]
+                for (j=i+1;j<=NR && j<i+4;j++) {
+                  if (lines[j] ~ /^SCRIPT ERROR:|^ERROR:/) break
+                  print "::error::" lines[j]
+                }
+              }
+            }
+          }' /tmp/load_all.log
+          if grep -qE "^LOAD_FAIL|^LOAD_NOINSTANCE" /tmp/load_all.log; then
+            echo "script load failures detected"
+            exit 1
+          fi
+
       - name: Import project resources
         run: |
           set -e
@@ -72,18 +93,6 @@ jobs:
                 }
               }
             }' /tmp/import.log
-            exit 1
-          fi
-
-      - name: Load every GDScript
-        run: |
-          set -e
-          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
-          $GODOT --headless --path . --script res://tools/load_all.gd 2>&1 | tee /tmp/load_all.log
-          grep -E "^LOAD_FAIL|^LOAD_NOINSTANCE" /tmp/load_all.log | while IFS= read -r line; do
-            echo "::error::${line}"
-          done
-          if grep -qE "^LOAD_FAIL|^LOAD_NOINSTANCE" /tmp/load_all.log; then
             exit 1
           fi
 
