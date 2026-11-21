@@ -78,16 +78,16 @@ static func bresenham(a: Vector2i, b: Vector2i) -> Array:
 	var y0 := a.y
 	var x1 := b.x
 	var y1 := b.y
-	var dx := abs(x1 - x0)
-	var dy := abs(y1 - y0)
+	var dx: int = abs(x1 - x0)
+	var dy: int = abs(y1 - y0)
 	var sx := 1 if x0 < x1 else -1
 	var sy := 1 if y0 < y1 else -1
-	var err := dx - dy
+	var err: int = dx - dy
 	while true:
 		points.append(Vector2i(x0, y0))
 		if x0 == x1 and y0 == y1:
 			break
-		var e2 := 2 * err
+		var e2: int = 2 * err
 		if e2 > -dy:
 			err -= dy
 			x0 += sx

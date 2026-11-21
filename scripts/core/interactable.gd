@@ -117,7 +117,7 @@ class InteractLoot extends Interactable:
 class InteractZone extends Interactable:
 	var zone_id: int = 0
 	var radius: float = 150.0
-	var owner: int = GameTypes.Team.NONE
+	var zone_owner: int = GameTypes.Team.NONE
 	var capture_progress: float = 0.0
 	var capture_team: int = GameTypes.Team.NONE
 	var hold_time: float = 0.0
@@ -165,19 +165,19 @@ class InteractZone extends Interactable:
 			capture_progress += delta / 6.0
 			if capture_progress >= 1.0:
 				capture_progress = 1.0
-				if owner != GameTypes.Team.CRIMINALS:
-					owner = GameTypes.Team.CRIMINALS
+				if zone_owner != GameTypes.Team.CRIMINALS:
+					zone_owner = GameTypes.Team.CRIMINALS
 					match_ref.on_zone_captured(self, GameTypes.Team.CRIMINALS)
 		elif police > 0 and criminals == 0:
 			capture_progress += delta / 6.0
 			if capture_progress >= 1.0:
 				capture_progress = 1.0
-				if owner != GameTypes.Team.POLICE:
-					owner = GameTypes.Team.POLICE
+				if zone_owner != GameTypes.Team.POLICE:
+					zone_owner = GameTypes.Team.POLICE
 					match_ref.on_zone_captured(self, GameTypes.Team.POLICE)
 		else:
 			capture_progress = maxf(0.0, capture_progress - delta * 0.3)
-		if owner != GameTypes.Team.NONE:
+		if zone_owner != GameTypes.Team.NONE:
 			hold_time += delta
 
 

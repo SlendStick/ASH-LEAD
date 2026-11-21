@@ -67,7 +67,7 @@ jobs:
           cat /tmp/load_all.log
           # One compact annotation: GitHub keeps only the first 10, so dedupe.
           awk '/^### LOADING/{m=$0} /^SCRIPT ERROR:/{msg=$0; getline nxt; line=m " >>> " msg " || " nxt; if (!seen[line]++) print line}' /tmp/load_all.log \
-            | head -25 | tr '\n' ' ' > /tmp/digest.txt
+            | head -40 | tr '\n' ' ' > /tmp/digest.txt
           if [ -s /tmp/digest.txt ]; then
             echo "::error::GODOT_ERRORS $(cat /tmp/digest.txt)"
           fi

@@ -5,7 +5,7 @@ extends CharacterBody2D
 ## `input_*` fields.
 
 signal died(character: Character, killer: Character)
-signal downed(character: Character)
+signal went_downed(character: Character)
 signal revived(character: Character)
 signal health_changed(hp: int, max_hp: int)
 signal weapon_changed(weapon: Weapon)
@@ -408,7 +408,7 @@ func _on_hp_zero(from: Character) -> void:
 		bleed_out = 30.0
 		collision_layer = 8
 		velocity = Vector2.ZERO
-		downed.emit(self)
+		went_downed.emit(self)
 		match_ref.on_character_downed(self, from)
 		return
 	_die(from)

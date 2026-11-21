@@ -29,12 +29,12 @@ func _on_update(delta: float) -> void:
 	for zone in zones:
 		zone.update_zone(delta)
 	var zone = zones[active_zone] if active_zone < zones.size() else null
-	if zone != null and zone.owner != GameTypes.Team.NONE:
-		scores[zone.owner] = int(scores.get(zone.owner, 0)) + int(points_per_second * delta * 10.0) / 10
-		if int(scores.get(zone.owner, 0)) >= score_limit:
-			end(zone.owner, "reason_score_limit")
+	if zone != null and zone.zone_owner != GameTypes.Team.NONE:
+		scores[zone.zone_owner] = int(scores.get(zone.zone_owner, 0)) + int(points_per_second * delta * 10.0) / 10
+		if int(scores.get(zone.zone_owner, 0)) >= score_limit:
+			end(zone.zone_owner, "reason_score_limit")
 			return
-	if zone != null and zone.owner != GameTypes.Team.NONE:
+	if zone != null and zone.zone_owner != GameTypes.Team.NONE:
 		if active_zone < zones.size() - 1:
 			active_zone += 1
 			zones[active_zone].set_active(true)
