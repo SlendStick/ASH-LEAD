@@ -144,7 +144,7 @@ func _check_locale() -> void:
 		var entry: Variant = table[key]
 		if entry is Dictionary and not (entry.has("ru") and entry.has("en")):
 			_fail("locale key without ru/en: " + key)
-	var loc := load("res://autoload/localization.gd")
+	var loc: GDScript = load("res://autoload/localization.gd")
 	checks += 1
 	if loc == null:
 		_fail("localization autoload failed to load")

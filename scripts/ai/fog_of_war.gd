@@ -24,7 +24,7 @@ func reset() -> void:
 	_init()
 
 
-func update(match_ref, delta: float) -> void:
+func update(match_ref: Match, delta: float) -> void:
 	_timer += delta
 	_decay_detection(match_ref, delta)
 	if _timer < UPDATE_INTERVAL:
@@ -40,7 +40,7 @@ func update(match_ref, delta: float) -> void:
 	_update_detection(match_ref)
 
 
-func _reveal_from(match_ref, team: int, pos: Vector2) -> void:
+func _reveal_from(match_ref: Match, team: int, pos: Vector2) -> void:
 	var tile := match_ref.map_data.world_to_tile(pos)
 	var radius := int(SIGHT_RADIUS)
 	for dy in range(-radius, radius + 1):
@@ -56,7 +56,7 @@ func _reveal_from(match_ref, team: int, pos: Vector2) -> void:
 			explored[team][t] = true
 
 
-func _update_detection(match_ref) -> void:
+func _update_detection(match_ref: Match) -> void:
 	for team in [GameTypes.Team.CRIMINALS, GameTypes.Team.POLICE]:
 		var other := GameTypes.Team.POLICE if team == GameTypes.Team.CRIMINALS else GameTypes.Team.CRIMINALS
 		var seen_now := {}
@@ -92,7 +92,7 @@ func _update_detection(match_ref) -> void:
 			detected[team].erase(enemy)
 
 
-func _decay_detection(match_ref, delta: float) -> void:
+func _decay_detection(match_ref: Match, delta: float) -> void:
 	for team in detected:
 		for enemy in detected[team].keys():
 			var entry: Dictionary = detected[team][enemy]

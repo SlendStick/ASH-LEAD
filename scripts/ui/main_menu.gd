@@ -69,7 +69,7 @@ func _build() -> void:
 		button.text = Localization.t(entry["key"])
 		button.custom_minimum_size = Vector2(340, 46)
 		button.add_theme_font_size_override("font_size", 20)
-		button.alignment = Button.ALIGNMENT_LEFT
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(_on_button.bind(String(entry["screen"])))
 		box.add_child(button)
 	# Status block

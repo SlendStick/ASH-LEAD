@@ -185,7 +185,7 @@ func _reset_character(character: Character) -> void:
 	character.collision_layer = 2 | 4
 	character.collision_mask = 1 | 2 | 4 | 8
 	if character.sprite != null:
-		character.sprite.modulate = Color.white
+		character.sprite.modulate = Color.WHITE
 	for w in character.weapons:
 		w.ammo_in_mag = int(w.data.get("mag", 0))
 		w.reserve = int(w.data.get("reserve", 0))

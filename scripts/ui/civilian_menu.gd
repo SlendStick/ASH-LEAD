@@ -56,7 +56,7 @@ func _build() -> void:
 		var button := Button.new()
 		button.text = Localization.t(entry["key"])
 		button.add_theme_font_size_override("font_size", 18)
-		button.alignment = Button.ALIGNMENT_LEFT
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(_on_command.bind(String(entry["cmd"])))
 		box.add_child(button)
 

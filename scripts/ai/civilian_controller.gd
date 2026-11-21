@@ -8,7 +8,7 @@ const PANIC_RADIUS := 420.0
 const REPORT_DELAY := 4.0
 
 var character: Character
-var match_ref = null
+var match_ref: Match = null
 var state: int = GameTypes.NPCState.ROUTINE
 var home_pos: Vector2 = Vector2.ZERO
 var wander_target: Vector2 = Vector2.INF
@@ -34,7 +34,7 @@ var calm_timer := 0.0
 var _saw_threat: bool = false
 
 
-func _init(character_ref: Character, match_ref, conf: float = 0.4) -> void:
+func _init(character_ref: Character, match_ref: Match, conf: float = 0.4) -> void:
 	character = character_ref
 	match_ref = match_ref
 	confidence = conf
@@ -297,7 +297,7 @@ func _move_to(pos: Vector2, speed: float) -> void:
 	var dir := to.normalized()
 	# Avoid remembered danger when possible.
 	if memory["danger_pos"] != Vector2.INF and character.global_position.distance_to(memory["danger_pos"]) < 260.0:
-		var away := (character.global_position - memory["danger_pos"]).normalized()
+		var away: Vector2 = (character.global_position - memory["danger_pos"]).normalized()
 		dir = (dir + away * 0.8).normalized()
 	character.move_input = dir
 	character.aim_target = character.global_position + dir * 180.0

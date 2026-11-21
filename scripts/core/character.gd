@@ -22,7 +22,7 @@ const STAMINA_DRAIN := 26.0
 const STAMINA_REGEN := 16.0
 const INTERACT_RANGE := 110.0
 
-var match_ref = null
+var match_ref: Match = null
 var char_name: String = "Оператор"
 var team: int = GameTypes.Team.NONE
 var role: int = GameTypes.Role.OBSERVER
@@ -374,7 +374,7 @@ func _melee_attack() -> void:
 func _use_gadget() -> void:
 	if gadgets.is_empty() or gadget_cooldown > 0.0:
 		return
-	var gadget_id := gadgets.keys()[gadget_index % gadgets.size()]
+	var gadget_id: String = String(gadgets.keys()[gadget_index % gadgets.size()])
 	gadget_cooldown = 6.0
 	match_ref.use_gadget(self, String(gadget_id))
 
@@ -442,7 +442,7 @@ func revive(by: Character) -> void:
 	collision_layer = 2 | 4
 	alive = true
 	if sprite != null:
-		sprite.modulate = Color.white
+		sprite.modulate = Color.WHITE
 	revived.emit(self)
 	health_changed.emit(hp, max_hp)
 

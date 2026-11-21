@@ -25,7 +25,7 @@ var characters: Array = []
 var players: Array = []
 var interactables: Array = []
 var local_player: Character = null
-var local_controller = null
+var local_controller: PlayerController = null
 var local_team: int = GameTypes.Team.CRIMINALS
 var camera: Camera2D
 var listener: AudioListener2D
@@ -34,7 +34,7 @@ var fog: FogOfWar
 var resonance: CityResonance
 var mode: GameMode
 var hud = null
-var replay = null
+var replay: ReplayRecorder = null
 
 var phase: int = GameTypes.GamePhase.LOBBY
 var phase_time: float = 0.0
@@ -210,7 +210,7 @@ func _spawn_characters() -> void:
 			character.controlled = true
 			camera.global_position = character.global_position
 		elif bool(entry.get("is_bot", false)):
-			var bot := load("res://scripts/ai/bot_controller.gd").new(character, self, int(entry.get("difficulty", 1)))
+			var bot: BotController = load("res://scripts/ai/bot_controller.gd").new(character, self, int(entry.get("difficulty", 1)))
 			character.add_child(bot)
 			character.is_bot = true
 			character.controller = bot
@@ -276,7 +276,7 @@ func _spawn_civilians() -> void:
 		civ.collision_layer = 8
 		civ.collision_mask = 1 | 2 | 4 | 16
 		civ.speed_scale = float(civ_type.get("speed", 85)) / Character.WALK_SPEED
-		var controller := load("res://scripts/ai/civilian_controller.gd").new(civ, self, float(civ_type.get("confidence", 0.4)))
+		var controller: CivilianController = load("res://scripts/ai/civilian_controller.gd").new(civ, self, float(civ_type.get("confidence", 0.4)))
 		civ.add_child(controller)
 		civ.controller = controller
 		controller.home_pos = civ.global_position
@@ -317,7 +317,7 @@ func spawn_deferred_team(team: int) -> void:
 			character.controlled = true
 			camera.global_position = character.global_position
 		elif bool(entry.get("is_bot", false)):
-			var bot := load("res://scripts/ai/bot_controller.gd").new(character, self, int(entry.get("difficulty", 1)))
+			var bot: BotController = load("res://scripts/ai/bot_controller.gd").new(character, self, int(entry.get("difficulty", 1)))
 			character.add_child(bot)
 			character.is_bot = true
 			character.controller = bot
@@ -590,7 +590,7 @@ func spawn_blood(pos: Vector2, dir: Vector2, amount: int) -> void:
 	var count := amount * (1 if int(SettingsManager.get_setting("blood_level")) == 1 else 2)
 	for i in count:
 		var node := Sprite2D.new()
-		var tex := load("res://assets/textures/fx_blood_%d.png" % (1 + (randi() % 3)))
+		var tex: Texture2D = load("res://assets/textures/fx_blood_%d.png" % (1 + (randi() % 3)))
 		node.texture = tex
 		node.position = pos + Vector2(randf_range(-14, 14), randf_range(-14, 14))
 		node.rotation = dir.angle() + randf_range(-0.6, 0.6)
@@ -872,7 +872,7 @@ func _respawn(character: Character) -> void:
 	character.collision_layer = 2 | 4
 	character.collision_mask = 1 | 2 | 4 | 8
 	if character.sprite != null:
-		character.sprite.modulate = Color.white
+		character.sprite.modulate = Color.WHITE
 		character.sprite.rotation = 0.0
 	character.health_changed.emit(character.hp, character.max_hp)
 	feed(Localization.t("feed_respawn") % character.char_name)
@@ -883,7 +883,7 @@ func _respawn(character: Character) -> void:
 func take_bot_control(bot: Character) -> void:
 	if bot.controller != null and bot.controller is BotController:
 		bot.controller.active = false
-	var controller := load("res://scripts/core/player_controller.gd").new()
+	var controller: PlayerController = load("res://scripts/core/player_controller.gd").new()
 	controller.character = bot
 	controller.match_ref = self
 	bot.add_child(controller)

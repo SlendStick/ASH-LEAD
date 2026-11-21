@@ -8,7 +8,7 @@ const REPATH_INTERVAL := 1.2
 const STUCK_DISTANCE := 18.0
 
 var character: Character
-var match_ref = null
+var match_ref: Match = null
 var difficulty: int = 1
 var active: bool = true
 
@@ -35,7 +35,7 @@ var guard_dir: Vector2 = Vector2.RIGHT
 var _order_ack_cd := 0.0
 
 
-func _init(character_ref: Character, match_ref, diff: int = 1) -> void:
+func _init(character_ref: Character, match_ref: Match, diff: int = 1) -> void:
 	character = character_ref
 	match_ref = match_ref
 	difficulty = diff

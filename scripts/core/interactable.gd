@@ -16,7 +16,7 @@ var busy_by: Character = null
 var label: String = ""
 
 
-func _add_icon(texture_name: String, scale_factor: float = 1.0, tint: Color = Color.white) -> Sprite2D:
+func _add_icon(texture_name: String, scale_factor: float = 1.0, tint: Color = Color.WHITE) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.texture = load("res://assets/textures/%s.png" % texture_name)
 	sprite.scale = Vector2.ONE * scale_factor

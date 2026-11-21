@@ -102,7 +102,7 @@ func _build() -> void:
 			button.text = Localization.t(String(h.get("title_key", "highlight_last_kill")))
 			button.custom_minimum_size = Vector2(360, 44)
 			button.position = Vector2(hx, hy + i * 56)
-			button.alignment = Button.ALIGNMENT_LEFT
+			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			button.pressed.connect(_on_highlight.bind(h))
 			add_child(button)
 	else:
