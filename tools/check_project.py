@@ -498,6 +498,34 @@ def check_perk_table():
             report(perks_path, 0, "PERK-UNUSED", perk, "хелперы %s никто не вызывает" % sorted(helpers))
 
 
+def check_input_actions():
+    """An `Input.is_action_pressed("x")` for an action missing in project.godot
+    is a runtime error on every frame the player touches that key."""
+    path = os.path.join(ROOT, "project.godot")
+    if not os.path.exists(path):
+        return
+    text = read(path)
+    section = re.search(r"\[input\](.*?)(\n\[|\Z)", text, re.S)
+    defined = set(re.findall(r"^(\w+)=\{", section.group(1), re.M)) if section else set()
+    if not defined:
+        return
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            p = os.path.join(root, fn)
+            for i, line in enumerate(read(p).split("\n"), 1):
+                if line.strip().startswith("#"):
+                    continue
+                for m in re.finditer(r'is_action_(?:pressed|just_pressed|released|exact_match)\("(\w+)"\)', line):
+                    if m.group(1) not in defined:
+                        report(p, i, "MISSING-ACTION", m.group(1), line)
+                for m in re.finditer(r'get_axis\("(\w+)",\s*"(\w+)"\)', line):
+                    for act in m.groups():
+                        if act not in defined:
+                            report(p, i, "MISSING-ACTION", act, line)
+
+
 def check_project_godot():
     path = os.path.join(ROOT, "project.godot")
     if not os.path.exists(path):
@@ -532,6 +560,7 @@ def main():
     check_class_refs()
     check_data_refs()
     check_perk_table()
+    check_input_actions()
     check_project_godot()
 
     if problems:
