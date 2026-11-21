@@ -3,7 +3,8 @@ extends Node2D
 ## Bakes the level floor into a single static canvas item.
 ## Wet asphalt, cold interior stone, carpet, tiles, grates, rails and water.
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 var map: GeneratedMap
 

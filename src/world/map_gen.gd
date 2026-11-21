@@ -12,16 +12,17 @@ extends RefCounted
 ## The generator is fully deterministic from (theme, seed, mode): the host
 ## generates, sends `to_dict()` and every client rebuilds identical geometry.
 
-const G := GeneratedMap
-const TK_VOID := G.TK_VOID
-const TK_FLOOR := G.TK_FLOOR
-const TK_STREET := G.TK_STREET
-const TK_WALL := G.TK_WALL
-const TK_WINDOW := G.TK_WINDOW
-const TK_DOOR := G.TK_DOOR
-const TK_GRATE := G.TK_GRATE
-const TK_RAIL := G.TK_RAIL
-const TK_WATER := G.TK_WATER
+## Tile ids mirrored from GeneratedMap. Enum members of a `class_name` are not
+## constant expressions in GDScript, so they cannot be used in `const`.
+const TK_VOID := 0
+const TK_FLOOR := 1
+const TK_STREET := 2
+const TK_WALL := 3
+const TK_WINDOW := 4
+const TK_DOOR := 5
+const TK_GRATE := 6
+const TK_RAIL := 7
+const TK_WATER := 8
 const TK_CRATE := 9
 
 const ROOM_KINDS := {

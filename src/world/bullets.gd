@@ -76,7 +76,7 @@ func _physics_process(delta: float) -> void:
 		var victim: Actor = null
 		var victim_d := 1e9
 		if world != null and world.has_method("actors_all"):
-			for a in world.call("actors_all"):
+			for a: Actor in world.call("actors_all"):
 				if a == null or a.dead or a == shooter:
 					continue
 				if hit_ids.has(a.a_id):

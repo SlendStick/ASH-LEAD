@@ -148,7 +148,7 @@ func _apply_medkit() -> void:
 	if world == null:
 		return
 	var healed := 0
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a == null or a.dead or a.team != owner_team:
 			continue
 		if a.global_position.distance_to(pos) > 90.0:

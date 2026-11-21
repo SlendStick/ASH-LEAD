@@ -31,9 +31,8 @@ func start_broadcast(info: Dictionary) -> void:
 	stop_all()
 	_beacon = info.duplicate(true)
 	udp = PacketPeerUDP.new()
-	var err := udp.set_broadcast_enabled(true)
-	if err == OK:
-		err = udp.set_dest_address("255.255.255.255", BEACON_PORT)
+	udp.set_broadcast_enabled(true)
+	var err := udp.set_dest_address("255.255.255.255", BEACON_PORT)
 	if err != OK:
 		broadcasting = false
 		return

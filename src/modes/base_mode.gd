@@ -211,5 +211,5 @@ func net_apply(rows: Array) -> void:
 			found.objective_id = id
 		found.progress = float(row.get("p", found.progress))
 		found.team_owner = int(row.get("o", found.team_owner))
-		found.state = int(row.get("s", found.state))
+		found.state = str(row.get("s", found.state))
 		found.queue_redraw()

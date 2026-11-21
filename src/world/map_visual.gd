@@ -8,7 +8,8 @@ extends Node2D
 ## static layer is baked into a SubViewport once, then only animated overlays
 ## (lights, rain, fog, decals) redraw.
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 var map: GeneratedMap
 var floors_root: Node2D

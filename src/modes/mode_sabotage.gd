@@ -24,12 +24,12 @@ func setup_objectives() -> void:
 		var o := spawn_objective(ObjectiveNode.Kind.BOMB_SITE, centers[i], letters[i], Color("ff1f4b"))
 		sites.append({"node": o, "pos": centers[i]})
 	# give the C4 to a criminal
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.team == Db.TEAM_CRIMINAL and not a.is_civilian and not a.is_bot:
 			carrier = a
 			break
 	if carrier == null:
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.team == Db.TEAM_CRIMINAL and not a.is_civilian:
 				carrier = a
 				break
@@ -139,14 +139,14 @@ func on_actor_died(victim: Actor, killer: Actor, _headshot: bool) -> void:
 		defuse_progress = 0.0
 	# all criminals dead before plant = police win
 	var crim_alive := 0
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.team == Db.TEAM_CRIMINAL and not a.dead and not a.is_civilian:
 			crim_alive += 1
 	if crim_alive == 0 and not planted:
 		win(Db.TEAM_POLICE, "наёмники уничтожены")
 	# all police dead after plant = plant succeeds
 	var pol_alive := 0
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.team == Db.TEAM_POLICE and not a.dead:
 			pol_alive += 1
 	if pol_alive == 0:

@@ -155,7 +155,7 @@ func _perceive(delta: float) -> void:
 	# scan for armed actors in line of sight
 	if actor.world == null or not actor.world.has_method("actors_for_team"):
 		return
-	for other in actor.world.call("actors_for_team", -1):
+	for other: Actor in actor.world.call("actors_for_team", -1):
 		if other == actor or other.dead:
 			continue
 		if other.team == Db.TEAM_CIVILIAN:
@@ -229,7 +229,7 @@ func _update_emotions(delta: float) -> void:
 		fear = maxf(0.0, fear - delta * 0.02)
 	# herd instinct: fear spreads from nearby panicking civilians
 	if actor.world != null and actor.world.has_method("nearby_civilians"):
-		for c in actor.world.call("nearby_civilians", actor.global_position, 300.0):
+		for c: Actor in actor.world.call("nearby_civilians", actor.global_position, 300.0):
 			if c == actor:
 				continue
 			var cai = c.get("ai")

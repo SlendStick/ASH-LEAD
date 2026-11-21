@@ -18,7 +18,8 @@ var breach_timer := 0.0
 var noise_on_open := true
 var alarm_triggered := false
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 
 func setup(m: GeneratedMap, d: Dictionary, gid: int, visual: MapVisual, w: Node) -> void:

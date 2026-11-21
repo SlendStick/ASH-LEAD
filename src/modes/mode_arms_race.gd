@@ -11,7 +11,7 @@ var respawn_queue: Array[Dictionary] = []
 
 
 func setup_objectives() -> void:
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.is_civilian:
 			continue
 		player_tier[a.a_id] = 0

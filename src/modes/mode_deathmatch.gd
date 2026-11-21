@@ -55,10 +55,10 @@ func bot_point(actor: Actor) -> Variant:
 	# bots push towards the nearest living enemy
 	var nearest: Actor = null
 	var best := 1e9
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.dead or a.team == actor.team or a.is_civilian:
 			continue
-		var d := a.global_position.distance_to(actor.global_position)
+		var d: float = a.global_position.distance_to(actor.global_position)
 		if d < best:
 			best = d
 			nearest = a

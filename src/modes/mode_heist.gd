@@ -34,7 +34,7 @@ func setup_objectives() -> void:
 			i += 1
 	bags_total = mini(3, maxi(2, vault_points.size()))
 	for i in range(mini(bags_total, vault_points.size())):
-		var o := spawn_objective(ObjectiveNode.Kind.VAULT, vault_points[i], "СЕЙФ %d" % (i + 1), Color("ffb02b"), Db.TEAM_CRIMINAL)
+		var o: ObjectiveNode = spawn_objective(ObjectiveNode.Kind.VAULT, vault_points[i], "СЕЙФ %d" % (i + 1), Color("ffb02b"), Db.TEAM_CRIMINAL)
 		o.radius = 70.0
 		o.data["cracked"] = false
 		o.data["progress"] = 0.0
@@ -74,7 +74,7 @@ func tick_mode(delta: float) -> void:
 		# nearby criminals with tools advance it
 		var has_drill := false
 		var has_key := false
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.dead or a.team != Db.TEAM_CRIMINAL or a.is_civilian:
 				continue
 			if a.global_position.distance_to(o.global_position) > 74.0:
@@ -110,7 +110,7 @@ func tick_mode(delta: float) -> void:
 		if van_timer <= 0.0:
 			win(Db.TEAM_POLICE, "фургон ушёл без вас")
 	# criminals escaping: standing near van with a bag
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.dead or a.team != Db.TEAM_CRIMINAL or a.is_civilian:
 			continue
 		if a.bag_carried and a.global_position.distance_to(van_pos) < 92.0:
@@ -127,7 +127,7 @@ func tick_mode(delta: float) -> void:
 	if van_open and escaped == 0:
 		var any_waiting := false
 		var waiting := 0
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.team == Db.TEAM_CRIMINAL and not a.dead and not a.is_civilian:
 				if a.global_position.distance_to(van_pos) < 100.0:
 					waiting += 1

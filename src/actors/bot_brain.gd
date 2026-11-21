@@ -44,6 +44,8 @@ var patrol_route: Array = []
 var patrol_index := 0
 var investigate_point := Vector2.ZERO
 var investigate_time := 0.0
+## 0..1 situational awareness: heard shots, corpses, doors. Decays back to 0.
+var alertness := 0.0
 var stuck_timer := 0.0
 var last_pos := Vector2.ZERO
 var cover_point := Vector2.ZERO
@@ -144,7 +146,7 @@ func _perceive(delta: float) -> void:
 				_radio_contact(e)
 	if best != null:
 		if target != best:
-			reaction_timer = REACTION.get(_diff_key(), 0.3) * rng.randf_range(0.75, 1.3)
+			reaction_timer = float(REACTION.get(_diff_key(), 0.3)) * rng.randf_range(0.75, 1.3)
 		target = best
 		target_visible = true
 		target_last_seen = best.global_position
@@ -173,7 +175,7 @@ func _enemy_list() -> Array:
 		return out
 	if not actor.world.has_method("actors_for_team"):
 		return out
-	for a in actor.world.call("actors_for_team", -1):
+	for a: Actor in actor.world.call("actors_for_team", -1):
 		if a == actor or a.dead:
 			continue
 		var hostile := false
@@ -293,7 +295,7 @@ func _find_downed_ally() -> Actor:
 		return null
 	var best: Actor = null
 	var best_d := 420.0
-	for a in actor.world.call("actors_for_team", -1):
+	for a: Actor in actor.world.call("actors_for_team", -1):
 		if a == actor or not a.downed or a.dead or a.team != actor.team:
 			continue
 		var d := actor.global_position.distance_to(a.global_position)
@@ -700,8 +702,8 @@ func _act(delta: float) -> void:
 
 
 func _aim_offset(dist: float) -> Vector2:
-	var err_scale := AIM_ERROR.get(_diff_key(), 0.5)
-	var moving_factor := 1.0 + actor.velocity.length() / 260.0
+	var err_scale := float(AIM_ERROR.get(_diff_key(), 0.5))
+	var moving_factor: float = 1.0 + actor.velocity.length() / 260.0
 	var dist_factor := clampf(dist / 420.0, 0.4, 2.2)
 	if actor.aiming:
 		err_scale *= 0.7

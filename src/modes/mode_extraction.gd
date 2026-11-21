@@ -12,11 +12,11 @@ var escort_carrier: Actor = null
 
 func setup_objectives() -> void:
 	var victims: Array = []
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.is_civilian and a.get_meta("hostage", false) != true and a.ai != null:
 			victims.append(a)
 	if victims.is_empty():
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.is_civilian:
 				victims.append(a)
 	if not victims.is_empty():
@@ -50,7 +50,7 @@ func tick_mode(delta: float) -> void:
 	var closest_pol: Actor = null
 	var cd := 1e9
 	var pd := 1e9
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.dead or a.is_civilian:
 			continue
 		var d: float = a.global_position.distance_to(vip.global_position)

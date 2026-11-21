@@ -100,8 +100,8 @@ func _noise(seconds: float) -> PackedFloat32Array:
 
 func _env(a: PackedFloat32Array, attack: float, decay: float, curve: float = 3.0) -> PackedFloat32Array:
 	var n := a.size()
-	var atk := max(1, int(attack * RATE))
-	var dec := max(1, int(decay * RATE))
+	var atk: int = maxi(1, int(attack * RATE))
+	var dec: int = maxi(1, int(decay * RATE))
 	for i in range(n):
 		var e := 1.0
 		if i < atk:
@@ -143,7 +143,7 @@ func _highpass(a: PackedFloat32Array, cutoff: float) -> PackedFloat32Array:
 
 
 func _mix(a: PackedFloat32Array, b: PackedFloat32Array, gain_b: float = 1.0) -> PackedFloat32Array:
-	var n := max(a.size(), b.size())
+	var n: int = maxi(a.size(), b.size())
 	var out := PackedFloat32Array()
 	out.resize(n)
 	for i in range(n):

@@ -605,7 +605,7 @@ func _outfit_card(team: String, id: String, data: Dictionary) -> Control:
 	d.custom_minimum_size = Vector2(300, 0)
 	v.add_child(d)
 	var btn := UiKit.make_small_button("ВЫБРАТЬ", accent)
-	var is_current := str(GameFlow.profile.get("outfit_" + team, "")) == id
+	var is_current: bool = str(GameFlow.profile.get("outfit_" + team, "")) == id
 	if is_current:
 		btn.text = "ВЫБРАНО"
 	btn.pressed.connect(func() -> void:

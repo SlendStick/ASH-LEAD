@@ -135,7 +135,9 @@ func _read_input(delta: float) -> void:
 	if interact_target != null:
 		tick_interact(delta, Input.is_action_pressed("interact"))
 	else:
-		var best := world.call("find_interactable", self) if world != null and world.has_method("find_interactable") else null
+		var best: Variant = null
+		if world != null and world.has_method("find_interactable"):
+			best = world.call("find_interactable", self)
 		if best != null:
 			var info: Dictionary = best
 			set_interact_target(info.get("node"), str(info.get("kind", "")), float(info.get("time", 1.0)))

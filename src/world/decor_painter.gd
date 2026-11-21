@@ -3,7 +3,8 @@ extends Node2D
 ## Top-down silhouettes for all props: furniture, cars, gurneys, shelves,
 ## neon signs, AC units, bodies of water and the little stories in between.
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 var map: GeneratedMap
 

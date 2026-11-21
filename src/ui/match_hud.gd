@@ -298,13 +298,13 @@ func tick(delta: float) -> void:
 
 
 func _tick_vitals(_delta: float) -> void:
-	var p = world.get("local_actor")
+	var p: Actor = world.get("local_actor") as Actor
 	if p == null or not is_instance_valid(p):
 		return
 	# vitals
 	hp_bar.value = p.hp / maxf(1.0, p.max_hp) * 100.0
-	var hurt := clampf(1.0 - p.hp / maxf(1.0, p.max_hp), 0.0, 1.0)
-	var alarm_pulse := clampf(float(world.get("alarm_level")) / 2.0, 0.0, 1.0) * 0.45
+	var hurt: float = clampf(1.0 - p.hp / maxf(1.0, p.max_hp), 0.0, 1.0)
+	var alarm_pulse: float = clampf(float(world.get("alarm_level")) / 2.0, 0.0, 1.0) * 0.45
 	Ui.set_pulse(maxf(hurt * 0.9, alarm_pulse))
 	armor_bar.value = (p.armor / maxf(1.0, maxf(p.max_armor, 1.0))) * 100.0
 	stamina_bar.value = p.stamina
@@ -325,7 +325,7 @@ func _tick_vitals(_delta: float) -> void:
 	ammo_label.add_theme_color_override("font_color", UiKit.P["bone"] if p.mag > 0 else UiKit.P["red"])
 	var gadgets: Array[String] = []
 	for g in ["grenade", "flashbang", "smoke", "molotov", "remote_charge", "medkit", "c4", "drill", "keycard"]:
-		var n := int(p.gadget_charges.get(g, 0))
+		var n: int = int(p.gadget_charges.get(g, 0))
 		if n > 0:
 			gadgets.append("%s x%d" % [str(Db.WEAPONS.get(g, {}).get("short", g)), n])
 	gadget_label.text = "  ".join(gadgets)
@@ -337,7 +337,7 @@ func _tick_vitals(_delta: float) -> void:
 
 
 func _tick_panels(_delta: float) -> void:
-	var p = world.get("local_actor")
+	var p: Actor = world.get("local_actor") as Actor
 	if p == null or not is_instance_valid(p):
 		return
 	# timer / score
@@ -558,7 +558,7 @@ func toggle_pause() -> void:
 func toggle_buy() -> void:
 	if buy_panel == null:
 		return
-	var p = world.get("local_actor")
+	var p: Actor = world.get("local_actor") as Actor
 	if p != null and p.dead:
 		Signals.notify.emit("Магазин недоступен после смерти", "warning")
 		return
@@ -684,7 +684,7 @@ func show_end(summary: Dictionary) -> void:
 	if clip.is_empty():
 		right.add_child(UiKit.make_label("Моментов не было. Только работа.", 14, UiKit.P["grey"]))
 	else:
-		var viewer := load("res://src/ui/replay_viewer.gd").new()
+		var viewer: Control = ReplayViewer.new()
 		viewer.set("clip", clip)
 		viewer.set("world", world)
 		viewer.set("autoplay", true)
@@ -704,7 +704,7 @@ func _stat_row(label: String, value: String) -> Control:
 func _on_replay(clip: Dictionary) -> void:
 	if end_shown:
 		return
-	var viewer := load("res://src/ui/replay_viewer.gd").new()
+	var viewer: Control = ReplayViewer.new()
 	viewer.set("clip", clip)
 	viewer.set("world", world)
 	viewer.set("autoplay", true)

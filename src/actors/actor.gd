@@ -615,9 +615,9 @@ func _shoot_projectile(w: Dictionary, dir: Vector2, pellet_index: int) -> void:
 		return
 	var bullet: Node2D
 	if speed >= 2600.0:
-		bullet = world.call("spawn_hitscan", origin, dir, w, self, 0.0)
+		bullet = world.call("spawn_hitscan", origin, dir, w, self, 0.0) as Node2D
 	else:
-		bullet = world.call("spawn_projectile", origin, dir, w, self, speed)
+		bullet = world.call("spawn_projectile", origin, dir, w, self, speed) as Node2D
 	if bullet == null:
 		return
 	if pellet_index == 0:
@@ -638,20 +638,20 @@ func _melee_attack(w: Dictionary, target: Vector2) -> void:
 	Signals.noise_made.emit(global_position, float(w.get("loud", 300.0)), "melee", team)
 	var hit_any := false
 	if world != null and world.has("actors"):
-		for other in world.call("actors_for_team", -1):
+		for other: Actor in world.call("actors_for_team", -1):
 			if other == self or other.dead or other.is_civilian:
 				continue
 			if other.team == team and not friendly_fire_on():
 				continue
-			var d := other.global_position.distance_to(global_position)
+			var d: float = other.global_position.distance_to(global_position)
 			if d > reach + 10.0:
 				continue
 			var da := absf(wrapf((other.global_position - global_position).angle() - ang, -PI, PI))
 			if da > 1.05:
 				continue
 			hit_any = true
-			var back := absf(wrapf(other.facing - ang, -PI, PI)) < 0.9 and other.velocity.length() < 40.0
-			var is_exec := bool(w.get("execute", false)) and back
+			var back: bool = absf(wrapf(other.facing - ang, -PI, PI)) < 0.9 and other.velocity.length() < 40.0
+			var is_exec: bool = bool(w.get("execute", false)) and back
 			var mult := 2.4 if is_exec else 1.0
 			var dmg := float(w.get("dmg", 40.0)) * mult
 			if other.downed:

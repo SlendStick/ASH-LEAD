@@ -7,7 +7,7 @@ var charges: Array[Dictionary] = []
 
 
 func setup_objectives() -> void:
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.team == Db.TEAM_CRIMINAL and not a.is_civilian and not a.is_bot:
 			a.gadget_charges["c4"] = 2
 			break
@@ -38,7 +38,7 @@ func tick_mode(delta: float) -> void:
 				return
 			# defusing requires a police officer nearby holding the action
 			var defuser: Actor = null
-			for a in world.call("actors_all"):
+			for a: Actor in world.call("actors_all"):
 				if a.team == Db.TEAM_POLICE and not a.dead and a.global_position.distance_to(o.global_position) < 80.0:
 					defuser = a
 					break
@@ -51,7 +51,7 @@ func tick_mode(delta: float) -> void:
 				c["defuse"] = maxf(0.0, float(c["defuse"]) - delta)
 		else:
 			# criminals can arm by standing close with the kit
-			for a in world.call("actors_all"):
+			for a: Actor in world.call("actors_all"):
 				if a.team == Db.TEAM_CRIMINAL and not a.dead and not a.is_civilian:
 					if a.global_position.distance_to(o.global_position) < 74.0 and int(a.gadget_charges.get("c4", 0)) > 0:
 						c["planted"] = true

@@ -10,11 +10,11 @@ var phase := 0
 
 func setup_objectives() -> void:
 	var candidates: Array = []
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.team == Db.TEAM_POLICE and a.is_bot and not a.is_civilian:
 			candidates.append(a)
 	if candidates.is_empty():
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.team == Db.TEAM_POLICE and not a.is_civilian:
 				candidates.append(a)
 	if not candidates.is_empty():
@@ -42,7 +42,7 @@ func tick_mode(delta: float) -> void:
 	# VIP sticks to the nearest cop
 	var best_cop: Actor = null
 	var bd := 1e9
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.team != Db.TEAM_POLICE or a.dead or a.is_civilian or a == vip:
 			continue
 		var d: float = a.global_position.distance_to(vip.global_position)
@@ -53,7 +53,7 @@ func tick_mode(delta: float) -> void:
 		vip.ai.set("order_target", best_cop.global_position)
 	# chase tension: criminals get a ping on the VIP every 20 seconds
 	if fmod(timer, 20.0) < delta:
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.team == Db.TEAM_CRIMINAL and not a.is_bot:
 				Signals.ui_ping.emit(vip.global_position, "vip")
 	if timer < 60.0:

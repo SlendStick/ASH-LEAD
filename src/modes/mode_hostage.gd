@@ -15,7 +15,7 @@ var exit_node: ObjectiveNode = null
 
 func setup_objectives() -> void:
 	world.set("friendly_fire", false)
-	for a in world.call("actors_all"):
+	for a: Actor in world.call("actors_all"):
 		if a.is_civilian and a.get_meta("hostage", false):
 			hostages.append(a)
 	rescues_needed = mini(3, hostages.size())
@@ -56,7 +56,7 @@ func tick_mode(delta: float) -> void:
 			continue
 		if exit_node != null and h.global_position.distance_to(exit_node.global_position) < 90.0:
 			var cop_near := false
-			for a in world.call("actors_all"):
+			for a: Actor in world.call("actors_all"):
 				if a.team == Db.TEAM_POLICE and not a.dead and a.global_position.distance_to(h.global_position) < 120.0:
 					cop_near = true
 					break

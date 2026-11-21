@@ -2,7 +2,8 @@ class_name Util
 extends RefCounted
 ## Small stateless helpers shared by gameplay, AI and UI.
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 
 ## Grid DDA line of sight. Returns true when the segment crosses no vision blocker.

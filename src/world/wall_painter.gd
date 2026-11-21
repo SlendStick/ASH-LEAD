@@ -4,7 +4,8 @@ extends Node2D
 ## glass windows, girders and signage on the facade. Runs as a child of the
 ## static physics body so it never has to be moved.
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 var map: GeneratedMap
 

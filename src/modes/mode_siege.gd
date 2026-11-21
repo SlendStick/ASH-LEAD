@@ -53,7 +53,7 @@ func tick_mode(delta: float) -> void:
 		var o: ObjectiveNode = z["node"]
 		var players_crim := 0
 		var players_pol := 0
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.dead or a.is_civilian:
 				continue
 			if a.global_position.distance_to(o.global_position) > o.radius:

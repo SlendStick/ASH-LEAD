@@ -346,7 +346,7 @@ func _spawn_bot(team: int, mode_data: Dictionary, outfit: String, difficulty: in
 	# bots get a perk roll so the player's choices have a counterpart
 	if difficulty >= 2:
 		var perk_pool := ["iron_lungs", "sharpshooter", "battering", "diversion", "ghost"]
-		var picked := perk_pool[rng.randi_range(0, perk_pool.size() - 1)]
+		var picked: String = str(perk_pool[rng.randi_range(0, perk_pool.size() - 1)])
 		if not b.perks.has(picked):
 			b.perks.append(picked)
 	var brain := BotBrain.new()
@@ -1400,13 +1400,13 @@ func _find_grabbable(a: Actor) -> Variant:
 			continue
 		if c.get_meta("escort_id", 0) != 0:
 			continue
-		var d := c.global_position.distance_to(a.global_position)
+		var d: float = c.global_position.distance_to(a.global_position)
 		if d < best_d:
 			best_d = d
 			best = c
 	if best == null:
 		return null
-	var is_held := bool(best.get_meta("hostage", false))
+	var is_held: bool = bool(best.get_meta("hostage", false))
 	if is_held:
 		return {"node": best, "kind": "grab_hostage", "text": "Взять заложника [E]", "time": 1.1}
 	if best.downed or best.get_meta("surrender", false) or a.team == Db.TEAM_POLICE:
@@ -1460,7 +1460,7 @@ func raise_alarm(level: int, reason: String) -> void:
 	var text := "ТИХО" if level == 0 else ("ТРЕВОГА" if level >= 2 else "ПОДОЗРЕНИЕ")
 	Signals.match_event.emit("%s: %s" % [text, reason], Color("ff2b62") if level >= 2 else Color("ffb02b"), "alarm")
 	# music escalates with the alarm: the heist groove gives way to a chase
-	var arcade := str(Db.MODES.get(str(cfg.get("mode", "")), {}).get("family", "")) == "arcade"
+	var arcade: bool = str(Db.MODES.get(str(cfg.get("mode", "")), {}).get("family", "")) == "arcade"
 	if not arcade:
 		if level >= 2:
 			Sfx.play_music("tension", 2.5)
@@ -1846,7 +1846,7 @@ func find_interactable(a: Actor) -> Variant:
 		var speed := Perks.revive_speed_mult(a)
 		return {"node": fallen, "kind": "revive", "text": "Поднять [E]", "time": 2.6 / speed}
 	# hostages / witnesses: grab a civilian who already has their hands up
-	var grab := _find_grabbable(a)
+	var grab: Variant = _find_grabbable(a)
 	if grab != null:
 		return grab
 	if best_door != null:
@@ -2071,7 +2071,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode in [KEY_1, KEY_2, KEY_3, KEY_4] and local_actor != null and not local_actor.dead:
-			var idx := event.keycode - KEY_1
+			var idx: int = event.keycode - KEY_1
 			if idx < local_actor.loadout.size():
 				local_actor.switch_to(local_actor.loadout[idx])
 	elif event is InputEventMouseButton and event.pressed:

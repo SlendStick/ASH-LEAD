@@ -19,7 +19,7 @@ func _process(delta: float) -> void:
 	t += delta
 	queue_redraw()
 	if world != null and world.has_method("actors_all"):
-		for a in world.call("actors_all"):
+		for a: Actor in world.call("actors_all"):
 			if a.dead or a.is_civilian or a.visual == null:
 				continue
 			if a.global_position.distance_to(global_position) < pickup_radius:

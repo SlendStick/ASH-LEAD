@@ -129,8 +129,8 @@ func _installed_card(perk_id: String, p: Dictionary) -> Control:
 	var p_actor: Actor = world.get("local_actor")
 	var active := p_actor != null and p_actor.perks.has(perk_id)
 	var col := Color("2bff9a") if active else Color("b6ff2b")
-	var title := "%s%s" % [str(p["name"]), "  ✓" if active else ""]
-	var card := _simple_card(title, str(p["desc"]), 0, col, func() -> void: pass)
+	var title: String = "%s%s" % [str(p["name"]), "  ✓" if active else ""]
+	var card: Control = _simple_card(title, str(p["desc"]), 0, col, func() -> void: pass)
 	var buy_btn := _find_buy_button(card)
 	if buy_btn != null:
 		buy_btn.text = "АКТИВЕН" if active else "ВЗЯТЬ В БОЙ"

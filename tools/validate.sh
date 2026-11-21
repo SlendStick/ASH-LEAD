@@ -35,6 +35,12 @@ done < <(find src -name '*.gd')
 echo "== project checks"
 python3 tools/check_project.py || fail=1
 
+# Godot 4.7 treats several type-safety diagnostics as load-blocking errors
+# ("warning treated as error"). gdparse only sees syntax, so this stands in for
+# the editor's type checker on the cases that actually stop a script loading.
+echo "== type checks (Variant inference / const expressions)"
+python3 tools/typecheck.py || fail=1
+
 echo "== shaders"
 python3 - <<'PY'
 import glob, re, sys

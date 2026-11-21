@@ -4,7 +4,8 @@ extends Node2D
 ## on the street and low-lying smoke over puddles. Purely visual; vision itself
 ## is computed by VisionSystem.
 
-const T := GeneratedMap.TILE
+## tile size in pixels (mirrors GeneratedMap.TILE; class consts are not const-expressions)
+const T := 64
 
 var map: GeneratedMap
 var t := 0.0
