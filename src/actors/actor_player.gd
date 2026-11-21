@@ -159,6 +159,16 @@ func _read_input_predict() -> void:
 	var d := mouse - global_position
 	if d.length() > 6.0:
 		facing = d.angle()
+	# cosmetic prompt only: the host decides whether the interaction happens
+	if interact_target == null and world != null and world.has_method("find_interactable"):
+		var info: Variant = world.call("find_interactable", self)
+		if info != null and info is Dictionary:
+			set_interact_target(info["node"], str(info["kind"]), float(info["time"]))
+			Signals.interact_prompt.emit(str(info["text"]), true)
+		else:
+			Signals.interact_prompt.emit("", false)
+	elif interact_target != null:
+		Signals.interact_prompt.emit("", not is_instance_valid(interact_target))
 
 
 ## `G` throws the first lethal/utility grenade in the kit; support items (medkit,

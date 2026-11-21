@@ -736,6 +736,13 @@ func apply_net_input(a: Actor, packet: Dictionary) -> void:
 	a.crouching = bool(int(packet.get("cr", 0)))
 	if bool(int(packet.get("fir", 0))):
 		a.try_fire(a.global_position + Vector2(cos(a.facing), sin(a.facing)) * 240.0)
+	# The host owns the interaction target for remote players: their client only
+	# says "E is held". Re-scan every 4th packet, which is cheap and still feels
+	# instant when a player walks up to a door.
+	if a.interact_target == null and int(packet.get("seq", 0)) % 4 == 0:
+		var info: Variant = find_interactable(a)
+		if info != null and info is Dictionary:
+			a.set_interact_target(info["node"], str(info["kind"]), float(info["time"]))
 	if bool(int(packet.get("it", 0))) and a.interact_target != null:
 		a.tick_interact(1.0 / 30.0, true)
 
