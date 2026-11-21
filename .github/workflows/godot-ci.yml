@@ -1,0 +1,77 @@
+name: Godot CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: godot-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Godot project
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install GDScript parser
+        run: pip install gdtoolkit
+
+      - name: Static parse of all GDScript files
+        run: |
+          set -e
+          ERR=0
+          while IFS= read -r f; do
+            if ! gdparse "$f" > /tmp/gdparse_out.txt 2>&1; then
+              echo "--- parse failure: $f"
+              cat /tmp/gdparse_out.txt
+              ERR=1
+            fi
+          done < <(find autoload scripts tools -name '*.gd' | sort)
+          if [ "$ERR" != "0" ]; then exit 1; fi
+          echo "GDScript parse: OK"
+
+      - name: Download Godot headless
+        run: |
+          set -e
+          GODOT_VER="4.7.2-stable"
+          curl -sL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VER}/Godot_v${GODOT_VER}_linux.x86_64.zip"
+          unzip -o -q /tmp/godot.zip -d /tmp/godot
+          chmod +x /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64
+          /tmp/godot/Godot_v${GODOT_VER}_linux.x86_64 --version
+
+      - name: Import project resources
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --import 2>&1 | tee /tmp/import.log
+          ! grep -q "SCRIPT ERROR" /tmp/import.log
+          ! grep -q "Parse Error" /tmp/import.log
+
+      - name: Load project and scenes
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          $GODOT --headless --path . --script res://tools/validate.gd 2>&1 | tee /tmp/validate.log
+          ! grep -q "SCRIPT ERROR" /tmp/validate.log
+          ! grep -q "Parse Error" /tmp/validate.log
+          grep -q "VALIDATE_OK" /tmp/validate.log
+
+      - name: Headless smoke test (autotest)
+        run: |
+          set -e
+          GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          ASH_AUTOTEST=1 $GODOT --headless --path . --script res://tools/autotest.gd 2>&1 | tee /tmp/autotest.log
+          ! grep -q "SCRIPT ERROR" /tmp/autotest.log
+          ! grep -q "Parse Error" /tmp/autotest.log
+          grep -q "AUTOTEST_OK" /tmp/autotest.log

@@ -1,0 +1,60 @@
+{
+  "weapons": [
+    {
+      "id": "p9", "name": "П-9 «Кобра»", "class": "pistol", "auto": false,
+      "damage": 24, "rpm": 400, "spread": 2.0, "recoil": 0.7,
+      "mag": 12, "reserve": 60, "reload": 1.2, "range": 520,
+      "pellets": 1, "noise": 0.65, "price": 0, "icon": "icon_pistol",
+      "desc": "Штатный пистолет. Надёжный, но малоёмкий."
+    },
+    {
+      "id": "p9s", "name": "П-9С «Жало»", "class": "pistol", "auto": false,
+      "damage": 30, "rpm": 320, "spread": 2.6, "recoil": 1.0,
+      "mag": 9, "reserve": 45, "reload": 1.4, "range": 460,
+      "pellets": 1, "noise": 0.8, "price": 250, "icon": "icon_pistol",
+      "desc": "Тяжёлый пистолет с сильной отдачей."
+    },
+    {
+      "id": "vec9", "name": "ВК-9 «Оса»", "class": "smg", "auto": true,
+      "damage": 17, "rpm": 820, "spread": 3.4, "recoil": 0.55,
+      "mag": 30, "reserve": 120, "reload": 1.8, "range": 420,
+      "pellets": 1, "noise": 0.7, "price": 700, "icon": "icon_smg",
+      "desc": "Высокий темп, посредственная точность на ходу."
+    },
+    {
+      "id": "kv14", "name": "КВ-14 «Карп»", "class": "carbine", "auto": true,
+      "damage": 24, "rpm": 600, "spread": 2.4, "recoil": 0.8,
+      "mag": 30, "reserve": 90, "reload": 2.0, "range": 760,
+      "pellets": 1, "noise": 0.85, "price": 1200, "icon": "icon_carbine",
+      "desc": "Сбалансированный карабин для средней дистанции."
+    },
+    {
+      "id": "ob12", "name": "ОБ-12 «Гвозди»", "class": "shotgun", "auto": false,
+      "damage": 11, "rpm": 75, "spread": 7.5, "recoil": 1.8,
+      "mag": 6, "reserve": 30, "reload": 2.6, "range": 260,
+      "pellets": 8, "noise": 1.0, "price": 900, "icon": "icon_shotgun",
+      "desc": "Разрушительная вблизи, почти бесполезен издалека."
+    },
+    {
+      "id": "sv90", "name": "СВ-90 «Сокол»", "class": "marksman", "auto": false,
+      "damage": 62, "rpm": 55, "spread": 0.6, "recoil": 2.4,
+      "mag": 5, "reserve": 25, "reload": 2.8, "range": 1300,
+      "pellets": 1, "noise": 1.0, "price": 1800, "icon": "icon_marksman",
+      "desc": "Точная винтовка. Медленная перезарядка, один выстрел — один итог."
+    },
+    {
+      "id": "dtas", "name": "ДТ-7 «Стужа»", "class": "taser", "auto": false,
+      "damage": 8, "rpm": 90, "spread": 1.2, "recoil": 0.3,
+      "mag": 2, "reserve": 8, "reload": 2.2, "range": 240,
+      "pellets": 1, "noise": 0.25, "price": 300, "icon": "icon_taser",
+      "desc": "Нелетальное средство: оглушает, не убивает."
+    },
+    {
+      "id": "knife", "name": "Клинок", "class": "melee", "auto": false,
+      "damage": 45, "rpm": 110, "spread": 0.0, "recoil": 0.2,
+      "mag": 0, "reserve": 0, "reload": 0.0, "range": 70,
+      "pellets": 1, "noise": 0.15, "price": 0, "icon": "icon_melee",
+      "desc": "Тихий последний довод."
+    }
+  ]
+}
