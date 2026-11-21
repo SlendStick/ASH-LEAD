@@ -22,6 +22,9 @@ var blood_shader_mat: ShaderMaterial
 var static_baked := false
 var floor_painter: Node2D = null
 var time := 0.0
+var glass_overlay: CanvasLayer = null
+var glass_pane: ColorRect = null
+var glass_amount := 0.0
 
 var _rng := RandomNumberGenerator.new()
 
@@ -36,6 +39,7 @@ func setup(g: GeneratedMap) -> void:
 	_build_fog()
 	_build_lights()
 	_build_rain()
+	_build_glass_overlay()
 	_build_physics_bounds()
 	_apply_floor_shader()
 
@@ -121,6 +125,60 @@ func _build_lights() -> void:
 	lights_layer.call("build")
 
 
+## Windows are glass, and glass is wet: a screen-space pane shader fades in as
+## the camera gets close to a window tile, so peeking through a shop front or a
+## car window reads as looking through rain-slick glass.
+func _build_glass_overlay() -> void:
+	var shader: Shader = load("res://shaders/rain_glass.gdshader")
+	if shader == null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "GlassOverlay"
+	layer.layer = 3
+	var rect := ColorRect.new()
+	rect.name = "Pane"
+	rect.color = Color(1, 1, 1, 1)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	mat.set_shader_parameter("drop_density", 26.0)
+	mat.set_shader_parameter("drop_speed", 0.9)
+	mat.set_shader_parameter("streak_amount", 0.5)
+	mat.set_shader_parameter("distortion", 0.012)
+	mat.set_shader_parameter("frost", 0.18)
+	mat.set_shader_parameter("glass_tint", Color(0.55, 0.68, 0.85, 0.0))
+	rect.material = mat
+	layer.add_child(rect)
+	add_child(layer)
+	glass_overlay = layer
+	glass_pane = rect
+
+
+## Called from _process: how close is the nearest window to the camera?
+func _tick_glass(delta: float) -> void:
+	if glass_pane == null or map == null:
+		return
+	var cam := get_viewport().get_camera_2d()
+	if cam == null:
+		return
+	var cam_cell := map.world_to_cell(cam.global_position)
+	var near := 9999.0
+	for c in map.windows:
+		var d := Vector2(c - cam_cell).length()
+		if d < near:
+			near = d
+	# glass fades in within three tiles and stays subtle: it is atmosphere, not
+	# a blindfold
+	var target := 0.0
+	if near < 3.0:
+		target = clampf(1.0 - near / 3.0, 0.0, 1.0) * 0.85
+	glass_amount = lerpf(glass_amount, target, clampf(delta * 4.0, 0.0, 1.0))
+	var mat := glass_pane.material as ShaderMaterial
+	if mat != null:
+		mat.set_shader_parameter("glass_tint", Color(0.55, 0.68, 0.85, 0.10 * glass_amount))
+
+
 func _build_rain() -> void:
 	rain.set_script(load("res://src/world/rain_layer.gd"))
 	rain.set("map", map)
@@ -187,6 +245,7 @@ func _process(delta: float) -> void:
 		rain.call("tick", delta)
 	if lights_layer != null and lights_layer.has_method("tick"):
 		lights_layer.call("tick", delta)
+	_tick_glass(delta)
 
 
 ## Blood decal that persists for the whole round (Hatred-grade mess).

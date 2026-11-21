@@ -247,6 +247,37 @@ func _draw_prop(p: Vector2, kind: String, rot: float, sc: float, prop: Dictionar
 			draw_circle(p, 10.0, Color(0.5, 0.5, 0.6, 0.4), true)
 
 
+## Each lit sign owns one small Sprite2D carrying shaders/neon_sign.gdshader:
+## the tube flicker, the glitch slice and the two-colour emission animate there,
+## while the flat neon geometry stays baked into the painter.
+func _spawn_sign_shader(p: Vector2, prop: Dictionary, col: Color) -> void:
+	var parent := get_parent()
+	if parent == null:
+		return
+	var shader: Shader = load("res://shaders/neon_sign.gdshader")
+	if shader == null:
+		return
+	# 1x1 white sprite stretched over the tube: the shader reads the texture
+	# luminance as the tube mask, so a filled rect IS the tube.
+	var img := Image.create(8, 32, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 1, 1, 1))
+	var node := Sprite2D.new()
+	node.name = "SignGlow"
+	node.texture = ImageTexture.create_from_image(img)
+	node.position = p + Vector2(10, 0)
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	mat.set_shader_parameter("sign_color", col)
+	mat.set_shader_parameter("backup_color", Color("35c9ff") if col.r > 0.5 else Color("ff2bd6"))
+	mat.set_shader_parameter("glow", 1.6)
+	mat.set_shader_parameter("flicker_chance", 0.25 + float(prop.get("flicker", 0.0)) * 0.5)
+	mat.set_shader_parameter("glitch", 0.12)
+	node.material = mat
+	node.z_index = 2
+	node.scale = Vector2(1.6, 1.0)
+	parent.call_deferred("add_child", node)
+
+
 func _car(p: Vector2, rot: float, sc: float) -> void:
 	var w := 78.0 * sc
 	var h := 38.0 * sc
@@ -262,9 +293,12 @@ func _car(p: Vector2, rot: float, sc: float) -> void:
 
 func _neon_sign(p: Vector2, prop: Dictionary, rng: RandomNumberGenerator) -> void:
 	var col := Color(str(prop.get("color", "#ff2b62")))
+	# A dead tube cycles off for a beat; the shader does that flicker on the GPU,
+	# here we only drop the painted fallback so both versions agree.
 	draw_set_transform(p, float(prop.get("rot", 0.0)) * 0.0, Vector2.ONE)
 	for i in range(3):
 		draw_rect(Rect2(p + Vector2(-8 + i * 20, -14), Vector2(10, 28)), Color(col.r, col.g, col.b, 0.22), true)
 	draw_line(p + Vector2(-30, 0), p + Vector2(50, 0), Color(col.r, col.g, col.b, 0.5), 3.0)
 	draw_circle(p + Vector2(50, 0), 6.0, Color(col.r, col.g, col.b, 0.6), true)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_spawn_sign_shader(p, prop, col)
