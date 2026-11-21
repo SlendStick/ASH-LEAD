@@ -13,6 +13,11 @@ var checked := {}
 
 
 func _initialize() -> void:
+	print("DIAG children=", root.get_children())
+	print("DIAG loc_node=", root.get_node_or_null("/root/Localization"))
+	print("DIAG audio_node=", root.get_node_or_null("/root/AudioManager"))
+	var tscript: Variant = load("res://scripts/core/types.gd")
+	print("DIAG types_script=", tscript, " can_inst=", tscript != null and tscript.can_instantiate())
 	var main_scene: Variant = load("res://scenes/Main.tscn")
 	if main_scene == null:
 		_fail("Main.tscn failed to load")
