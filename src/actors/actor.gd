@@ -24,6 +24,8 @@ var team := Db.TEAM_CRIMINAL
 var is_bot := false
 var is_civilian := false
 var is_hostage := false
+## Perk ids owned by this actor (see src/actors/perks.gd for the numbers).
+var perks: Array[String] = []
 var is_local_player := false
 
 # --- vital stats -----------------------------------------------------------
@@ -143,7 +145,11 @@ func set_outfit(outfit: String) -> void:
 	visual.setup(team, outfit)
 
 
-func setup_stats(perks: Array = []) -> void:
+func setup_stats(perk_ids: Array = []) -> void:
+	perks.clear()
+	for p in perk_ids:
+		if str(p) != "":
+			perks.append(str(p))
 	max_hp = 100.0
 	if perks.has("vigor"):
 		max_hp += 25.0
@@ -195,7 +201,9 @@ func current_accuracy_spread() -> float:
 	if crouching:
 		spread *= 0.78
 	if breath_hold > 0.0:
-		spread *= 0.66
+		spread *= 0.66 * Perks.breath_spread_mult(self)
+	if aiming:
+		spread *= Perks.aim_spread_mult(self)
 	if sprinting:
 		spread *= 1.4
 	return maxf(0.08, spread)
@@ -236,7 +244,7 @@ func _tick_timers(delta: float) -> void:
 	slow_timer = maxf(0.0, slow_timer - delta)
 	stun_timer = maxf(0.0, stun_timer - delta)
 	flash_timer = maxf(0.0, flash_timer - delta)
-	breath_cooldown = maxf(0.0, breath_cooldown - delta)
+	breath_cooldown = maxf(0.0, breath_cooldown - delta * Perks.breath_recover_mult(self))
 	recoil_heat = maxf(0.0, recoil_heat - delta * 2.2)
 	last_noise_timer = maxf(0.0, last_noise_timer - delta)
 	last_damage_time += delta
@@ -268,7 +276,7 @@ func _tick_movement(delta: float) -> void:
 	elif crouching:
 		target_speed = SPEED_CROUCH
 	elif sprinting and stamina > 4.0 and move_dir.length() > 0.1:
-		target_speed = SPEED_SPRINT
+		target_speed = SPEED_SPRINT * Perks.sprint_mult(self)
 	var mult := speed_mult
 	if slow_timer > 0.0:
 		mult *= 0.62
@@ -277,13 +285,13 @@ func _tick_movement(delta: float) -> void:
 	if hostage_carried != null:
 		mult *= 0.6
 	if bleed > 20.0:
-		mult *= 0.9
+		mult *= 0.9 * Perks.bleed_mult(self)
 	velocity = velocity.move_toward(move_dir * target_speed * mult, 1900.0 * delta)
 	move_and_slide()
 
 	# stamina
 	if sprinting and move_dir.length() > 0.1:
-		stamina = maxf(0.0, stamina - delta * 21.0)
+		stamina = maxf(0.0, stamina - delta * 21.0 * Perks.stamina_drain_mult(self))
 	else:
 		stamina = minf(100.0, stamina + delta * 15.5)
 
@@ -325,6 +333,7 @@ func _do_step(spd: float) -> void:
 	else:
 		Sfx.step(global_position, sprinting, false)
 	noise_level = loud
+	radius *= Perks.footstep_noise_mult(self)
 	Signals.noise_made.emit(global_position, radius, "step", team)
 
 
@@ -335,7 +344,7 @@ func _tick_posture(delta: float) -> void:
 		light = float(world.call("light_at", global_position))
 	in_light = light
 	in_shadow = light < 0.22
-	var c := 0.0
+	var c := Perks.concealment_bonus(self)
 	if crouching:
 		c += 0.34
 	if aiming:
@@ -472,6 +481,19 @@ func die(killer: Actor, bled_out: bool = false, headshot: bool = false) -> void:
 func _drop_weapon() -> void:
 	if world != null and world.has_method("drop_weapon") and current_weapon != "" and current_weapon != "knife":
 		world.call("drop_weapon", global_position, current_weapon, mag, reserve)
+
+
+## Same contract as Door.interact: the interaction system calls interact(self)
+## on whatever the prompt points at.
+func interact(by: Actor) -> void:
+	if by == null:
+		return
+	if downed:
+		if world != null and world.has_method("revive_ally"):
+			world.call("revive_ally", by, self)
+		return
+	if world != null:
+		world.call("grab_civilian", by, self, false)
 
 
 func revive(by: Actor) -> void:

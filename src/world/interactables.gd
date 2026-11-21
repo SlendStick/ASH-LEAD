@@ -123,7 +123,8 @@ func kick(by: Actor) -> void:
 	Signals.noise_made.emit(global_position, 900.0, "door", by.team if by != null else 2)
 	# stun whoever is behind it
 	if world != null and world.has_method("stun_cone"):
-		world.call("stun_cone", global_position, 90.0, 1.2, by.team)
+		var stun := 1.2 + Perks.kick_stun(by)
+		world.call("stun_cone", global_position, 90.0 if stun <= 1.2 else 130.0, stun, by.team)
 	_update_collision()
 	queue_redraw()
 

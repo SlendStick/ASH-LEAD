@@ -336,6 +336,12 @@ func _spawn_bot(team: int, mode_data: Dictionary, outfit: String, difficulty: in
 	b.set_outfit(outfit)
 	_apply_loadout(b, team, mode_data)
 	_place_actor(b, team, false, index)
+	# bots get a perk roll so the player's choices have a counterpart
+	if difficulty >= 2:
+		var perk_pool := ["iron_lungs", "sharpshooter", "battering", "diversion", "ghost"]
+		var picked := perk_pool[rng.randi_range(0, perk_pool.size() - 1)]
+		if not b.perks.has(picked):
+			b.perks.append(picked)
 	var brain := BotBrain.new()
 	brain.name = "Brain"
 	b.add_child(brain)
@@ -1186,6 +1192,11 @@ func door_breached(door: Door) -> void:
 	raise_alarm(1, "взлом двери")
 
 
+## Scavenger perk: reserve ammo picked from a corpse is 50% bigger.
+func ammo_from_corpse(by: Actor, base_amount: int) -> int:
+	return int(float(base_amount) * Perks.ammo_pickup_mult(by))
+
+
 func drop_weapon(pos: Vector2, weapon_id: String, mag: int, reserve: int) -> void:
 	var pickup := WeaponPickup.new()
 	pickup.weapon_id = weapon_id
@@ -1247,6 +1258,33 @@ func on_civilian_call(pos: Vector2) -> void:
 		police_arrive_timer = minf(police_delay, 45.0) if police_arrive_timer > 0.0 else 45.0
 	if mode != null and mode.has_method("on_alarm"):
 		mode.call("on_alarm", 2)
+
+
+## Nearest downed teammate within reach.
+func _find_downed_ally(a: Actor) -> Actor:
+	if a.is_civilian or a.dead:
+		return null
+	var best: Actor = null
+	var best_d := 70.0
+	for m in actors:
+		if m == null or m == a or not m.downed or m.dead:
+			continue
+		if m.team != a.team:
+			continue
+		var d := m.global_position.distance_to(a.global_position)
+		if d < best_d:
+			best_d = d
+			best = m
+	return best
+
+
+## Actor.tick_interact -> downed teammate.interact()
+func revive_ally(by: Actor, fallen: Actor) -> void:
+	if by == null or fallen == null or not fallen.downed:
+		return
+	fallen.revive(by)
+	by.score += 60
+	Signals.match_event.emit("ПОДНЯТ: %s" % fallen.a_name, Color("2bff9a"), "revive")
 
 
 ## Nearest civilian this actor can grab or release (hostage escort, witness
@@ -1394,6 +1432,12 @@ func on_actor_died(victim: Actor, killer: Actor, headshot: bool, bled_out: bool)
 		record_civilian_death(killer)
 	else:
 		if killer != null and killer != victim:
+			# predator: a knife kill from behind patches the killer up
+			if killer.current_weapon in ["knife", "machete", "katana"] and Perks.has(killer, "predator"):
+				var back := absf(wrapf((victim.global_position - killer.global_position).angle() - victim.facing, -PI, PI)) < 1.1
+				if back:
+					killer.hp = minf(killer.max_hp, killer.hp + Perks.backstab_heal())
+					Signals.match_event.emit("ХИЩНИК: +%d HP" % int(Perks.backstab_heal()), Color("2bff9a"), "perk")
 			killer.kills += 1
 			killer.kill_streak += 1
 			killer.score += 100 + (50 if headshot else 0)
@@ -1553,6 +1597,20 @@ func order_all(kind: String) -> void:
 			give_order(a.a_id, kind)
 
 
+## Comms perk: pings from a comms carrier mark enemies for longer. The marker
+## itself lives in last_known, which the minimap reads.
+func ping_mark(pos: Vector2, by: Actor) -> void:
+	var radius := 420.0
+	var extra := Perks.ping_duration_bonus(by)
+	for e in actors:
+		if e == null or e.dead or by == null or e.team == by.team:
+			continue
+		if e.global_position.distance_to(pos) < radius:
+			last_known[e.a_id] = e.global_position
+			if extra > 0.0:
+				e.set_meta("pinged_until", elapsed + 4.0 + extra)
+
+
 func order_click(pos: Vector2) -> void:
 	var best: Actor = null
 	var best_d := 99999.0
@@ -1573,6 +1631,7 @@ func order_click(pos: Vector2) -> void:
 	elif Input.is_key_pressed(KEY_ALT):
 		kind = "flank"
 	give_order(best.a_id, kind, pos)
+	ping_mark(pos, local_actor)
 	Signals.ui_ping.emit(pos, kind)
 
 
@@ -1688,6 +1747,11 @@ func find_interactable(a: Actor) -> Variant:
 		if dist < best_d:
 			best_d = dist
 			best_door = d
+	# downed ally first: reviving is the most time-critical interaction
+	var fallen := _find_downed_ally(a)
+	if fallen != null:
+		var speed := Perks.revive_speed_mult(a)
+		return {"node": fallen, "kind": "revive", "text": "Поднять [E]", "time": 2.6 / speed}
 	# hostages / witnesses: grab a civilian who already has their hands up
 	var grab := _find_grabbable(a)
 	if grab != null:
@@ -1695,7 +1759,8 @@ func find_interactable(a: Actor) -> Variant:
 	if best_door != null:
 		if best_door.locked:
 			if a.loadout.has("ksg") or a.loadout.has("breach_kit") or a.team == Db.TEAM_POLICE:
-				return {"node": best_door, "kind": "breach_door", "text": "Выбить дверь [E]", "time": 1.2}
+				var kick_time := 1.2 / Perks.interact_speed_mult(a)
+				return {"node": best_door, "kind": "breach_door", "text": "Выбить дверь [E]", "time": kick_time}
 			return {"node": best_door, "kind": "locked_door", "text": "Заперто", "time": 0.6}
 		return {"node": best_door, "kind": "door", "text": "Открыть/закрыть [E]", "time": 0.2}
 	return null
