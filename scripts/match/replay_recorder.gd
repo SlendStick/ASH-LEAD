@@ -14,8 +14,8 @@ var recording: bool = false
 var _timer := 0.0
 
 
-func start(match_ref: Match) -> void:
-	match_ref = match_ref
+func start(match: Match) -> void:
+	match_ref = match
 	frames.clear()
 	events.clear()
 	recording = true

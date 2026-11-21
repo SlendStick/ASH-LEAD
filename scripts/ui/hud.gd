@@ -228,15 +228,15 @@ func _build_overlays() -> void:
 
 # ---- lifecycle -------------------------------------------------------------
 
-func on_match_started(match_ref: Match) -> void:
-	match_ref = match_ref
-	minimap.match_ref = match_ref
+func on_match_started(match: Match) -> void:
+	match_ref = match
+	minimap.match_ref = match
 	scoreboard.match_ref = match_ref
-	map_overlay.match_ref = match_ref
-	death_screen.match_ref = match_ref
-	civilian_menu.match_ref = match_ref
-	negotiation_menu.match_ref = match_ref
-	order_wheel.match_ref = match_ref
+	map_overlay.match_ref = match
+	death_screen.match_ref = match
+	civilian_menu.match_ref = match
+	negotiation_menu.match_ref = match
+	order_wheel.match_ref = match
 	RebuildTeamList()
 	objective_label.text = match_ref.mode.get_objective_text() if match_ref.mode != null else ""
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
@@ -246,8 +246,8 @@ func _exit_tree() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 
-func update_hud(match_ref: Match, delta: float) -> void:
-	match_ref = match_ref
+func update_hud(match: Match, delta: float) -> void:
+	match_ref = match
 	if match_ref.finished:
 		return
 	var phase_text := ""

@@ -35,9 +35,9 @@ var guard_dir: Vector2 = Vector2.RIGHT
 var _order_ack_cd := 0.0
 
 
-func _init(character_ref: Character, match_ref: Match, diff: int = 1) -> void:
+func _init(character_ref: Character, match: Match, diff: int = 1) -> void:
 	character = character_ref
-	match_ref = match_ref
+	match_ref = match
 	difficulty = diff
 
 

@@ -34,9 +34,9 @@ var calm_timer := 0.0
 var _saw_threat: bool = false
 
 
-func _init(character_ref: Character, match_ref: Match, conf: float = 0.4) -> void:
+func _init(character_ref: Character, match: Match, conf: float = 0.4) -> void:
 	character = character_ref
-	match_ref = match_ref
+	match_ref = match
 	confidence = conf
 
 
