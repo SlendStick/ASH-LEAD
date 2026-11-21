@@ -555,6 +555,61 @@ func _spawn_net_actor(row: Dictionary) -> Actor:
 	return node
 
 
+## Client-only: regenerate the world from the host's seed/theme/mode.
+func _rebuild_map_from_host(payload: Dictionary) -> void:
+	var host_seed := int(payload.get("seed", 0))
+	var host_theme := str(payload.get("theme", ""))
+	var host_mode := str(payload.get("mode", str(cfg.get("mode", "heist"))))
+	if host_seed == 0 or host_theme == "" or not Db.MAPS.has(host_theme):
+		return
+	if map != null and map.seed_value == host_seed and map.theme_id == host_theme:
+		return
+	cfg["seed"] = host_seed
+	cfg["map"] = host_theme
+	cfg["mode"] = host_mode
+	rng.seed = host_seed
+	map = MapGen.generate(host_theme, host_seed, host_mode)
+	if visual != null:
+		remove_child(visual)
+		visual.queue_free()
+		visual = null
+	if effects != null:
+		if effects.get_parent() != null:
+			effects.get_parent().remove_child(effects)
+		effects.queue_free()
+		effects = null
+	for d in doors:
+		if d != null and is_instance_valid(d):
+			if d.get_parent() != null:
+				d.get_parent().remove_child(d)
+			d.queue_free()
+	doors.clear()
+	for e in explosives:
+		if e != null and is_instance_valid(e):
+			if e.get_parent() != null:
+				e.get_parent().remove_child(e)
+			e.queue_free()
+	explosives.clear()
+	visual = MapVisual.new()
+	visual.name = "MapVisual"
+	add_child(visual)
+	visual.setup(map)
+	# the fresh map visual must sit under every other layer, right where it was
+	if actors_root != null and actors_root.get_index() > 0:
+		move_child(visual, 0)
+	effects = Effects.new()
+	effects.map = map
+	if fx_root != null:
+		fx_root.add_child(effects)
+	_build_doors()
+	_build_explosives()
+	if fog != null:
+		fog.setup(map)
+	var mode_data: Dictionary = Db.MODES.get(host_mode, Db.MODES["heist"])
+	police_delay = float(mode_data.get("police_delay", 180.0))
+	Signals.notify.emit("Карта хоста загружена: %s" % str(map.theme.get("name", host_theme)), "info")
+
+
 func actor_for_peer(peer: int) -> Actor:
 	for a in actors:
 		if a != null and int(a.get_meta("peer", 0)) == peer:
@@ -563,8 +618,21 @@ func actor_for_peer(peer: int) -> Actor:
 
 
 ## Called on the client when the host ships the seed + roster.
+##
+## The client generated its own map from its own config when the scene loaded,
+## so the first thing to do is throw that away and rebuild the exact same
+## geometry the host is standing on. Without this every collision, door and
+## sightline disagrees and the match desyncs on the first shot.
 func on_net_roster(payload: Dictionary) -> void:
 	roster = payload.get("roster", [])
+	if bool(payload.get("has_map", false)):
+		_rebuild_map_from_host(payload)
+	for a in actors:
+		if a != null and is_instance_valid(a):
+			a.map = map
+	for d in doors:
+		if d != null and is_instance_valid(d) and d.has_method("rebind_map"):
+			d.rebind_map(map)
 	if not actors.is_empty():
 		# already mirrored from snapshots: attach peer ids, keep the actors
 		for row in roster:

@@ -37,6 +37,13 @@ func setup(m: GeneratedMap, d: Dictionary, gid: int, visual: MapVisual, w: Node)
 	_update_collision()
 
 
+## The client rebuilt the map under us: keep the door state, point at the new grid.
+func rebind_map(m: GeneratedMap) -> void:
+	map = m
+	global_position = Vector2(cell) * T + Vector2(T, T) * 0.5
+	_update_collision()
+
+
 ## When true a *locked* door seals its grid tile (walls/LOS/pathing all read the
 ## grid, so one virtual wall is enough). Unlocked doors stay walkable.
 var physics_blocking := true

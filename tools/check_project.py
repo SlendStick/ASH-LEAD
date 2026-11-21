@@ -50,6 +50,7 @@ has_method set_meta get_meta has_meta remove_meta position global_position rotat
 scale visible modulate z_index name owner size set_anchors_and_offsets_preset
 add_theme_stylebox_override add_theme_color_override add_theme_font_size_override
 add_theme_constant_override add_theme_font_override mouse_filter process_mode
+move_child reparent request_ready is_inside_tree get_path get_node_or_null add_sibling
 set_process set_physics_process queue_redraw draw_rect draw_line draw_circle
 draw_arc draw_string draw_colored_polygon draw_polyline draw_set_transform
 text value min_value max_value step show_percentage columns add_item select

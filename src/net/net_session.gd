@@ -75,6 +75,9 @@ func _send_roster() -> void:
 		"mode": str(world.get("cfg").get("mode", "heist")),
 		"roster": rows,
 		"host_peer": my_peer,
+		# tell the client to regenerate its map from our seed instead of keeping
+		# the one it built from its own lobby config
+		"has_map": true,
 	}
 	NetLink.rpc_any("net_roster", payload)
 	_roster_sent = true
