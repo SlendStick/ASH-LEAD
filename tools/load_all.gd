@@ -14,6 +14,7 @@ func _initialize() -> void:
 	_collect("res://tools", files)
 	files.sort()
 	for path in files:
+		print("### LOADING ", path)
 		var script: GDScript = load(path)
 		if script == null:
 			print("LOAD_FAIL ", path)

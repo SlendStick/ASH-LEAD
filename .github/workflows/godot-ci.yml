@@ -66,8 +66,8 @@ jobs:
           $GODOT --headless --path . --script res://tools/load_all.gd > /tmp/load_all.log 2>&1 || true
           cat /tmp/load_all.log
           # One compact annotation: GitHub keeps only the first 10, so dedupe.
-          awk '/^SCRIPT ERROR:/{msg=$0; getline nxt; print msg " || " nxt}' /tmp/load_all.log \
-            | sort -u | head -20 | tr '\n' ' ' > /tmp/digest.txt
+          awk '/^SCRIPT ERROR:/{msg=$0; getline nxt; line=msg " || " nxt; if (!seen[line]++) print line}' /tmp/load_all.log \
+            | head -40 | tr '\n' ' ' > /tmp/digest.txt
           if [ -s /tmp/digest.txt ]; then
             echo "::error::GODOT_ERRORS $(cat /tmp/digest.txt)"
           fi
