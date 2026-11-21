@@ -49,6 +49,7 @@ func load_profile() -> void:
 		"loadout_police": DEFAULT_LOADOUT["police"].duplicate(),
 		"settings": {"master": 0.8, "music": 0.7, "sfx": 0.9, "blood": 1.0, "shake": 0.6, "fov_pulse": true, "language": "ru"},
 		"video": {"crt": true, "crt_intensity": 0.55, "fog": true, "bloom": true, "scanlines": 480.0, "grain": 0.045, "aberration": 0.8},
+		"perks": [],
 		"outfit_crim": "heist",
 		"outfit_police": "swat",
 		"seen_intro": false,
@@ -96,6 +97,7 @@ func reset_progress() -> void:
 		"loadout_police": DEFAULT_LOADOUT["police"].duplicate(),
 		"settings": old_settings,
 		"video": old_video,
+		"perks": [],
 		"outfit_crim": "heist", "outfit_police": "swat", "seen_intro": true,
 	}
 	player_codename = old_name

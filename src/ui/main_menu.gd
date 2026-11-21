@@ -517,9 +517,16 @@ func _fill_loadout_slots(team_id: int) -> void:
 				items.append("%s — %s" % [Db.ARMOR[aid]["name"], Db.ARMOR[aid]["desc"]])
 				ids.append(aid)
 		elif slot == "perk":
+			# only perks bought in the buy menu can be slotted; the rest are shown
+			# as locked so the player sees what the cash is for
+			var owned_perks: Array = GameFlow.profile.get("perks", [])
 			for pid in Db.PERKS.keys():
-				items.append("%s — %s" % [Db.PERKS[pid]["name"], Db.PERKS[pid]["desc"]])
-				ids.append(pid)
+				var perk_id := str(pid)
+				var perk_row := "%s — %s" % [Db.PERKS[pid]["name"], Db.PERKS[pid]["desc"]]
+				if not owned_perks.has(perk_id):
+					perk_row += "  [КУПИТЬ В МАТЧЕ]"
+				items.append(perk_row)
+				ids.append(perk_id)
 		else:
 			for wid in Db.WEAPON_ORDER:
 				var w: Dictionary = Db.WEAPONS[wid]

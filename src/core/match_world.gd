@@ -292,7 +292,14 @@ func _apply_loadout(a: Actor, team: int, mode_data: Dictionary) -> void:
 		else:
 			kit = {"primary": "vk9" if team == 0 else "m4", "secondary": "pm9", "melee": "knife", "armor": "kevlar", "gadget_a": "grenade", "gadget_b": "flashbang", "perk": "ghost"}
 	a.loadout.clear()
-	a.setup_stats([str(kit.get("perk", ""))])
+	var owned_perks: Array = []
+	if GameFlow.profile.get("perks", []) is Array:
+		for op in GameFlow.profile.get("perks", []):
+			owned_perks.append(str(op))
+	var kit_perk := str(kit.get("perk", ""))
+	if kit_perk != "" and not owned_perks.has(kit_perk):
+		owned_perks.append(kit_perk)
+	a.setup_stats(owned_perks)
 	a.add_weapon(str(kit.get("primary", "vk9")))
 	a.add_weapon(str(kit.get("secondary", "pm9")))
 	a.add_weapon(str(kit.get("melee", "knife")))

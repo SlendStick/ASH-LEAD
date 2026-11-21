@@ -112,9 +112,83 @@ func _gadgets() -> void:
 
 
 func _perks() -> void:
+	var owned: Array = GameFlow.profile.get("perks", [])
 	for pid in Db.PERKS.keys():
 		var p: Dictionary = Db.PERKS[pid]
-		grid.add_child(_simple_card(str(p["name"]), str(p["desc"]), int(p["price"]), Color("b6ff2b"), func() -> void: pass))
+		var perk_id := str(pid)
+		if owned.has(perk_id):
+			# already bought: install it on this life instead of re-selling it
+			grid.add_child(_installed_card(perk_id, p))
+			continue
+		grid.add_child(_simple_card(str(p["name"]), str(p["desc"]), int(p["price"]), Color("b6ff2b"), func() -> void: _buy_perk(perk_id)))
+
+
+## A perk is bought once for cash, kept in the profile, and can be slotted into
+## the current life for free -- that is what makes them worth the price.
+func _installed_card(perk_id: String, p: Dictionary) -> Control:
+	var p_actor: Actor = world.get("local_actor")
+	var active := p_actor != null and p_actor.perks.has(perk_id)
+	var col := Color("2bff9a") if active else Color("b6ff2b")
+	var title := "%s%s" % [str(p["name"]), "  ✓" if active else ""]
+	var card := _simple_card(title, str(p["desc"]), 0, col, func() -> void: pass)
+	var buy_btn := _find_buy_button(card)
+	if buy_btn != null:
+		buy_btn.text = "АКТИВЕН" if active else "ВЗЯТЬ В БОЙ"
+		buy_btn.disabled = active
+		if not active:
+			buy_btn.pressed.connect(func() -> void:
+				var a: Actor = world.get("local_actor")
+				if a == null:
+					return
+				if not a.perks.has(perk_id):
+					a.perks.append(perk_id)
+				if perk_id == "vigor":
+					a.max_hp += 25.0
+					a.hp = minf(a.max_hp, a.hp + 25.0)
+				Sfx.play_ui("ui_buy")
+				Signals.notify.emit("Перк активен: " + Perks.name_of(perk_id), "good")
+				_refresh())
+	return card
+
+
+func _find_buy_button(node: Control) -> Button:
+	var stack: Array[Node] = [node]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is Button:
+			var b := n as Button
+			if b.text.begins_with("КУПИТЬ"):
+				return b
+		for c in n.get_children():
+			stack.append(c)
+	return null
+
+
+func _buy_perk(perk_id: String) -> void:
+	var p: Actor = world.get("local_actor")
+	if p == null:
+		return
+	var owned: Array = GameFlow.profile.get("perks", [])
+	if owned.has(perk_id):
+		return
+	var price := Perks.price(perk_id)
+	if int(GameFlow.profile.get("cash", 0)) < price:
+		Sfx.play_ui("ui_deny")
+		Signals.notify.emit("Не хватает денег", "bad")
+		return
+	GameFlow.add_cash(-price)
+	owned.append(perk_id)
+	GameFlow.profile["perks"] = owned
+	GameFlow.save_profile()
+	if not p.perks.has(perk_id):
+		p.perks.append(perk_id)
+		if perk_id == "vigor":
+			p.max_hp += 25.0
+			p.hp = minf(p.max_hp, p.hp + 25.0)
+	GameFlow.record_stat("perks_bought")
+	Sfx.play_ui("ui_buy")
+	Signals.notify.emit("Куплен перк: " + Perks.name_of(perk_id), "good")
+	_refresh()
 
 
 func _card(wid: String, w: Dictionary) -> Control:
