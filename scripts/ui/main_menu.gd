@@ -109,6 +109,8 @@ func _build() -> void:
 
 
 func _update_status() -> void:
+	if status_label == null or group_label == null:
+		return
 	if NetManager.is_online():
 		status_label.text = Localization.t("status_online") + " · " + Localization.t("status_lan")
 		status_label.add_theme_color_override("font_color", Color(0.4, 0.9, 0.8))

@@ -8,7 +8,6 @@ var checks: int = 0
 
 
 func _initialize() -> void:
-	TestEnv.ensure_autoloads(root)
 	_check_scripts()
 	_check_scenes()
 	_check_data()
@@ -55,12 +54,12 @@ func _check_scripts() -> void:
 	for p in _list_files("res://scripts", ".gd"):
 		checks += 1
 		var s: Variant = load(p)
-		if s == null:
+		if s == null or not s.can_instantiate():
 			_fail("script load failed: " + p)
 	for p in _list_files("res://autoload", ".gd"):
 		checks += 1
 		var s: Variant = load(p)
-		if s == null:
+		if s == null or not s.can_instantiate():
 			_fail("autoload load failed: " + p)
 
 

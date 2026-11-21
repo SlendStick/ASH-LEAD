@@ -13,7 +13,6 @@ var checked := {}
 
 
 func _initialize() -> void:
-	TestEnv.ensure_autoloads(root)
 	var main_scene: Variant = load("res://scenes/Main.tscn")
 	if main_scene == null:
 		_fail("Main.tscn failed to load")
