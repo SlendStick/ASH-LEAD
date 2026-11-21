@@ -55,8 +55,11 @@ jobs:
           set -e
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
           $GODOT --headless --path . --import 2>&1 | tee /tmp/import.log
-          ! grep -q "SCRIPT ERROR" /tmp/import.log
-          ! grep -q "Parse Error" /tmp/import.log
+          if grep -q "SCRIPT ERROR" /tmp/import.log || grep -q "Parse Error" /tmp/import.log; then
+            echo "--- import log (errors) ---"
+            grep -n -E "SCRIPT ERROR|Parse Error|ERROR|WARNING" /tmp/import.log | head -60
+            exit 1
+          fi
 
       - name: Load project and scenes
         run: |
@@ -72,6 +75,20 @@ jobs:
           set -e
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
           ASH_AUTOTEST=1 $GODOT --headless --path . --script res://tools/autotest.gd 2>&1 | tee /tmp/autotest.log
-          ! grep -q "SCRIPT ERROR" /tmp/autotest.log
-          ! grep -q "Parse Error" /tmp/autotest.log
+          if grep -q "SCRIPT ERROR" /tmp/autotest.log || grep -q "Parse Error" /tmp/autotest.log; then
+            echo "--- autotest log (errors) ---"
+            grep -n -E "SCRIPT ERROR|Parse Error|ERROR" /tmp/autotest.log | head -60
+            exit 1
+          fi
           grep -q "AUTOTEST_OK" /tmp/autotest.log
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-logs
+          path: |
+            /tmp/import.log
+            /tmp/validate.log
+            /tmp/autotest.log
+          if-no-files-found: ignore
