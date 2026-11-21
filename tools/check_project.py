@@ -387,6 +387,64 @@ def check_music_ids():
                         report(fpath, i, "MISSING-MUSIC", m.group(1), line)
 
 
+def check_class_refs():
+    """`Perks.foo()` on a class_name that does not declare foo is the same trap
+    as a typo: Godot fails at runtime, not at parse time."""
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            path = os.path.join(root, fn)
+            for i, line in enumerate(read(path).split("\n"), 1):
+                if line.strip().startswith("#"):
+                    continue
+                for m in re.finditer(r"\b([A-Z]\w+)\.(\w+)\b", line):
+                    cls, member = m.group(1), m.group(2)
+                    if cls not in CLASSES or cls in AUTOLOADS:
+                        continue
+                    # `.new()` on a class_name is the engine constructor
+                    if member == "new":
+                        continue
+                    entry = CLASSES[cls]
+                    if member in entry["funcs"] or member in entry["consts"] or member in entry["vars"]:
+                        continue
+                    # inherited members from the class chain
+                    if has_member(cls, member):
+                        continue
+                    report(path, i, "CLASS-MEMBER", "%s.%s" % (cls, member), line)
+
+
+def check_data_refs():
+    """Every id the UI/shop/gameplay strings mention should exist in Db."""
+    db_path = os.path.join(SRC, "autoload", "db.gd")
+    if not os.path.exists(db_path):
+        return
+    text = read(db_path)
+    tables = {}
+    for name in ["WEAPONS", "MODES", "MAPS", "PERKS", "ARMOR", "OUTFITS"]:
+        m = re.search(r"^const %s\s*:?=\s*\{(.*?)\n\}" % name, text, re.S | re.M)
+        if m:
+            tables[name] = set(re.findall(r'^\t"(\w+)":', m.group(1), re.M))
+    weapon_ids = tables.get("WEAPONS", set())
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd") or fn == "db.gd":
+                continue
+            path = os.path.join(root, fn)
+            for i, line in enumerate(read(path).split("\n"), 1):
+                if line.strip().startswith("#"):
+                    continue
+                for m in re.finditer(r'WEAPONS\["(\w+)"\]', line):
+                    if m.group(1) not in weapon_ids:
+                        report(path, i, "MISSING-WEAPON", m.group(1), line)
+                for m in re.finditer(r'MODES\["(\w+)"\]', line):
+                    if m.group(1) not in tables.get("MODES", set()):
+                        report(path, i, "MISSING-MODE", m.group(1), line)
+                for m in re.finditer(r'MAPS\["(\w+)"\]', line):
+                    if m.group(1) not in tables.get("MAPS", set()):
+                        report(path, i, "MISSING-MAP", m.group(1), line)
+
+
 def check_project_godot():
     path = os.path.join(ROOT, "project.godot")
     if not os.path.exists(path):
@@ -418,6 +476,8 @@ def main():
     check_world_contract()
     check_sfx_ids()
     check_music_ids()
+    check_class_refs()
+    check_data_refs()
     check_project_godot()
 
     if problems:
