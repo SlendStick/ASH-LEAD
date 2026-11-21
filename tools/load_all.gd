@@ -13,6 +13,32 @@ func _initialize() -> void:
 	_collect("res://scripts", files)
 	_collect("res://tools", files)
 	files.sort()
+	# Load the core classes first: their own diagnostics are otherwise masked
+	# by "Could not parse global class ..." errors in dependent scripts.
+	var core_first: Array = [
+		"res://scripts/core/types.gd",
+		"res://scripts/core/utils.gd",
+		"res://scripts/core/data.gd",
+		"res://scripts/core/weapon.gd",
+		"res://scripts/core/character.gd",
+		"res://scripts/core/interactable.gd",
+		"res://scripts/map/map_data.gd",
+		"res://scripts/map/props.gd",
+		"res://scripts/map/door.gd",
+		"res://scripts/map/map_view.gd",
+		"res://scripts/map/map_generator.gd",
+		"res://scripts/match/match.gd",
+		"res://scripts/match/replay_recorder.gd",
+		"res://scripts/modes/game_mode.gd",
+	]
+	var ordered: Array = []
+	for path in core_first:
+		if files.has(path):
+			ordered.append(path)
+	for path in files:
+		if not ordered.has(path):
+			ordered.append(path)
+	files = ordered
 	for path in files:
 		print("### LOADING ", path)
 		var script: GDScript = load(path)
