@@ -45,6 +45,9 @@ func _on_frame() -> void:
 					_finish()
 				return
 			phase = 3
+			print("DIAG hud=", match_node.hud, " hud_match_ref=", match_node.hud.match_ref if match_node.hud != null else "<null hud>")
+			print("DIAG mode=", match_node.mode, " chars=", match_node.characters.size(), " local_player=", match_node.local_player)
+			print("DIAG phase=", match_node.phase, " map=", match_node.map_data)
 		3:
 			_check_match()
 			if frames > 1400:
