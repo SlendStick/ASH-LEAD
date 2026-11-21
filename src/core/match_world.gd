@@ -488,6 +488,13 @@ func _build_fog_overlay() -> void:
 	fog.viewer_team = int(cfg.get("team", 0))
 	fog.eye = local_actor
 	_apply_fog_settings()
+	# video settings can change mid-match (pause menu); react instead of
+	# requiring a restart
+	Signals.settings_changed.connect(_on_settings_changed)
+
+
+func _on_settings_changed(_section: String) -> void:
+	_apply_fog_settings()
 
 
 func _apply_fog_settings() -> void:

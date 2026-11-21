@@ -804,7 +804,8 @@ func _slider_row(grid: GridContainer, label: String, key: String, s: Dictionary)
 		st[key] = v
 		GameFlow.profile["settings"] = st
 		GameFlow.apply_audio_settings()
-		GameFlow.save_profile())
+		GameFlow.save_profile()
+		GameFlow.prefs_changed.emit("audio"))
 	row.add_child(slider)
 	row.add_child(val)
 
