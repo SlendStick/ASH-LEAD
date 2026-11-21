@@ -948,7 +948,7 @@ func damage_barricade_at(pos: Vector2, amount: float) -> bool:
 				map.set_tile_cell(cell, GeneratedMap.TK_FLOOR)
 				map.refresh_cell(cell)
 				if visual != null:
-					visual._build_physics_bounds()
+					visual.rebuild_collisions()
 			barricades.erase(b)
 			Signals.match_event.emit("БАРРИКАДА РАЗБИТА", Color("ff1f4b"), "fortify")
 		return true
@@ -1154,7 +1154,7 @@ func deploy_barricade(pos: Vector2, team: int) -> void:
 	map.set_tile_cell(cell, GeneratedMap.TK_CRATE)
 	map.refresh_cell(cell)
 	if visual != null:
-		visual._build_physics_bounds()
+		visual.rebuild_collisions()
 	barricades.append({"cell": cell, "hp": 400.0, "team": team, "pos": pos})
 	Signals.match_event.emit("БАРРИКАДА", Color("ffb02b"), "fortify")
 

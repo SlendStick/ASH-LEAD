@@ -187,6 +187,13 @@ func _build_rain() -> void:
 	rain.z_index = 70
 
 
+## Public wrapper for runtime tile edits (barricades, breaches): rebuild the
+## merged colliders so players can walk through what just opened and stop at
+## what just closed.
+func rebuild_collisions() -> void:
+	_build_physics_bounds()
+
+
 ## One StaticBody2D for the whole level: consecutive solid tiles per row are
 ## merged into a single box collider, so a 100x100 map costs a few hundred shapes
 ## instead of ten thousand nodes (and doors can add/remove one at runtime).
