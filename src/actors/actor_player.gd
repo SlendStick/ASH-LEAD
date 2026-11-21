@@ -161,6 +161,9 @@ func _read_input_predict() -> void:
 		facing = d.angle()
 
 
+## `G` throws the first lethal/utility grenade in the kit; support items (medkit,
+## drone, fortify, breach kit) are used at the feet -- they are not thrown at
+## people, they are placed where you stand.
 func _use_quick_gadget() -> void:
 	var order := ["flashbang", "smoke", "grenade", "molotov", "remote_charge"]
 	for g in order:
@@ -172,5 +175,13 @@ func _use_quick_gadget() -> void:
 				target = global_position + to.normalized() * max_range
 			if throw_gadget(g, target):
 				Signals.notify.emit("Бросок: " + str(Db.WEAPONS[g]["short"]), "info")
+			return
+	for support in ["medkit", "drone", "fortify", "breach_kit"]:
+		if has_gadget(support):
+			var w: Dictionary = Db.WEAPONS[support]
+			var spot := global_position + Vector2(cos(facing), sin(facing)) * 26.0
+			world.call("spawn_thrown", spot, Vector2(cos(facing), sin(facing)), w, self, support)
+			gadget_charges[support] = int(gadget_charges.get(support, 0)) - 1
+			Signals.notify.emit("Установлено: " + str(w.get("short", support)), "good")
 			return
 	Signals.notify.emit("Гаджетов нет", "warning")

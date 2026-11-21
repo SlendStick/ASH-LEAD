@@ -316,6 +316,11 @@ func _apply_loadout(a: Actor, team: int, mode_data: Dictionary) -> void:
 		a.gadget_charges["fortify"] = 1
 		if str(kit.get("perk", "")) == "medic" or str(kit.get("perk", "")) == "comms":
 			a.gadget_charges["medkit"] = 1
+		if str(kit.get("perk", "")) == "comms":
+			a.gadget_charges["drone"] = 1
+	if str(kit.get("perk", "")) == "medic":
+		# medics on both sides carry a medkit: the revive economy needs them
+		a.gadget_charges["medkit"] = int(a.gadget_charges.get("medkit", 0)) + 1
 
 
 func _spawn_bot(team: int, mode_data: Dictionary, outfit: String, difficulty: int, index: int) -> Actor:
@@ -1323,6 +1328,13 @@ func raise_alarm(level: int, reason: String) -> void:
 		visual.lights_layer.call("set_alarm", level)
 	var text := "ТИХО" if level == 0 else ("ТРЕВОГА" if level >= 2 else "ПОДОЗРЕНИЕ")
 	Signals.match_event.emit("%s: %s" % [text, reason], Color("ff2b62") if level >= 2 else Color("ffb02b"), "alarm")
+	# music escalates with the alarm: the heist groove gives way to a chase
+	var arcade := str(Db.MODES.get(str(cfg.get("mode", "")), {}).get("family", "")) == "arcade"
+	if not arcade:
+		if level >= 2:
+			Sfx.play_music("tension", 2.5)
+		elif level == 0:
+			Sfx.play_music("heist", 3.0)
 	if level >= 2:
 		Sfx.play_ui("alarm")
 	if level >= 2:
@@ -1717,7 +1729,15 @@ func finish_match(winner_team: int, reason: String, extra: Dictionary = {}) -> v
 		GameFlow.add_xp(220)
 		Signals.match_event.emit("ПОРАЖЕНИЕ", Color("ff1f4b"), "end")
 	GameFlow.record_stat("matches")
+	var pl: Dictionary = summary["player"]
+	GameFlow.record_stat("kills", int(pl.get("kills", 0)))
+	GameFlow.record_stat("deaths", int(pl.get("deaths", 0)))
+	GameFlow.record_stat("headshots", int(pl.get("headshots", 0)))
+	if str(cfg.get("mode", "")) in ["heist", "siege", "bomb_defuse", "sabotage", "extraction", "vip"] and winner_team == int(cfg.get("team", 0)):
+		GameFlow.record_stat("heists")
+	GameFlow.save_profile()
 	Sfx.play_music("menu", 2.0)
+	Sfx.stop_ambience()
 	Signals.match_ended.emit(summary)
 	if hud != null and hud.has_method("show_end"):
 		hud.call("show_end", summary)

@@ -365,6 +365,27 @@ def check_sfx_ids():
                         report(fpath, i, "MISSING-SFX", m.group(1), line)
 
 
+def check_music_ids():
+    path = os.path.join(SRC, "autoload", "sfx.gd")
+    if not os.path.exists(path):
+        return
+    text = read(path)
+    tracks = set(re.findall(r'music_tracks\["(\w+)"\]', text))
+    if not tracks:
+        return
+    for root, _dirs, files in os.walk(SRC):
+        for fn in files:
+            if not fn.endswith(".gd"):
+                continue
+            fpath = os.path.join(root, fn)
+            for i, line in enumerate(read(fpath).split("\n"), 1):
+                if line.strip().startswith("#"):
+                    continue
+                for m in re.finditer(r'play_music\(\s*"([\w]+)"', line):
+                    if m.group(1) not in tracks:
+                        report(fpath, i, "MISSING-MUSIC", m.group(1), line)
+
+
 def check_project_godot():
     path = os.path.join(ROOT, "project.godot")
     if not os.path.exists(path):
@@ -395,6 +416,7 @@ def main():
         check_file(path)
     check_world_contract()
     check_sfx_ids()
+    check_music_ids()
     check_project_godot()
 
     if problems:
