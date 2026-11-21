@@ -60,9 +60,18 @@ jobs:
           echo "===== END RAW IMPORT LOG ====="
           if grep -q "SCRIPT ERROR" /tmp/import.log || grep -q "Parse Error" /tmp/import.log; then
             echo "import step reported script errors"
-            grep -A4 -E "SCRIPT ERROR|Parse Error" /tmp/import.log | head -120 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
+            # Each Godot error block is 3 lines: blank, "SCRIPT ERROR: ...", location.
+            awk '/^SCRIPT ERROR:|^ERROR:/{blk=NR} {lines[NR]=$0} END{
+              for (i=1;i<=NR;i++) {
+                if (lines[i] ~ /^SCRIPT ERROR:|^ERROR:/) {
+                  print "::error::" lines[i]
+                  for (j=i+1;j<=NR && j<i+4;j++) {
+                    if (lines[j] ~ /^SCRIPT ERROR:|^ERROR:/) break
+                    print "::error::" lines[j]
+                  }
+                }
+              }
+            }' /tmp/import.log
             exit 1
           fi
 
