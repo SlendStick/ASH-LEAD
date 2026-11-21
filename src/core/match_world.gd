@@ -1163,8 +1163,8 @@ func deploy_barricade(pos: Vector2, team: int) -> void:
 func breach_kit_used(pos: Vector2, by: Actor) -> void:
 	var best: Door = null
 	var best_d := 90.0
-	for d in doors:
-		var dist := d.global_position.distance_to(pos)
+	for d: Door in doors:
+		var dist: float = d.global_position.distance_to(pos)
 		if dist < best_d:
 			best_d = dist
 			best = d
@@ -1835,8 +1835,8 @@ func find_interactable(a: Actor) -> Variant:
 	# doors: the most-used interaction in the game
 	var best_door: Door = null
 	var best_d := 78.0
-	for d in doors:
-		var dist := d.global_position.distance_to(a.global_position)
+	for d: Door in doors:
+		var dist: float = d.global_position.distance_to(a.global_position)
 		if dist < best_d:
 			best_d = dist
 			best_door = d

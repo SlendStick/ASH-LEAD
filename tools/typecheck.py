@@ -30,10 +30,11 @@ VARIANT_FUNCS = {
 }
 
 # Methods on Dictionary / Array / untyped that return Variant.
+# Only the container methods that really return Variant. `keys()`, `duplicate()`,
+# `values()`, `filter()`, `map()` all return a typed Array and infer fine.
 VARIANT_METHODS = {
     "get", "pop_back", "pop_front", "pick_random", "reduce", "front", "back",
-    "values", "keys", "duplicate", "find_key", "max", "min", "any", "all",
-    "filter", "map", "slice", "assign",
+    "find_key", "max", "min",
 }
 
 problems = []
@@ -136,9 +137,11 @@ def is_variant_expr(expr):
     # explicit cast / typed call keeps its type
     if re.search(r"\bas\s+[A-Z]\w*$", e):
         return False
-    # typed function call on a typed receiver, e.g. map.world_to_cell(x)
-    if re.match(r"^[\w.\[\]\"']+\(.*\)$", e) and not re.match(r"^(load|str|typeof)\(", e):
-        return False
+    # explicit wrapper around a Variant (int/float/str/bool) already handled above;
+    # a *bare* Variant function must still be caught, so check VARIANT_FUNCS first
+    if m0 := re.match(r"^([A-Za-z_]\w*)\s*\(", e):
+        if m0.group(1) in VARIANT_FUNCS:
+            return True
     # ternary: only as good as its branches
     if " if " in e and " else " in e:
         parts = e.split(" if ")[0], e.split(" else ")[-1]
@@ -175,6 +178,16 @@ def untyped_names(text):
     for m in re.finditer(r"^\s*(\w+)\s*=\s*(?:\w+\.)*(?:get|call|pop_back|pop_front|pick_random)\(",
                          text, re.M):
         names.add(m.group(1))
+    # `for x in world.call(...)` / `.get(...)` / untyped array -> x is Variant
+    for m in re.finditer(r"^\s*for\s+(\w+)\s+in\s+(.+?):\s*$", text, re.M):
+        iterable = m.group(2)
+        if re.search(r"\.call\(|\.get\(|\.values\(|\.keys\(", iterable):
+            names.add(m.group(1))
+            continue
+        # untyped container name
+        base = iterable.strip().split(".")[0]
+        if base in names:
+            names.add(m.group(1))
     return names
 
 
@@ -195,9 +208,12 @@ def check_file(path):
         m = re.match(r"^(\s*)var\s+(\w+)\s*:=\s*(.+?)\s*$", code)
         if m:
             expr = m.group(3)
-            # member access / indexing on a Variant receiver -> Variant result
+            # Member access / indexing whose *root* is a Variant receiver
+            # yields Variant. A typed wrapper around it (`int(x.get(...))`) or a
+            # typed method (`_find_actor(...)`) keeps its type, so only look at
+            # the root of the expression.
             for nm in untyped:
-                if re.search(r"\b%s\s*[.\[]" % re.escape(nm), expr):
+                if re.match(r"^(%s)\s*[.\[]" % re.escape(nm), expr.strip()):
                     report(path, idx, "INFERRED-VARIANT",
                            "var %s := %s (через Variant %s)" % (m.group(2), expr[:50], nm))
                     expr = ""
@@ -220,15 +236,140 @@ def check_const_class_member(path):
             report(path, idx, "CONST-EXPR", "%s.%s" % (m.group(1), m.group(2)))
 
 
+# Engine members that subclasses assign without declaring. Kept deliberately
+# small: this check exists to catch typos like `alertness`, not to re-derive the
+# whole class reference.
+GODOT_BASE_MEMBERS = set("""
+position global_position rotation scale visible modulate z_index z_as_relative name owner size
+custom_minimum_size mouse_filter process_mode collision_layer collision_mask velocity facing
+layer texture texture_filter material centered color enabled autoplay process_priority
+""".split())
+
+
+def declared_names(text):
+    """Everything that can legally be referenced bare in this script."""
+    names = set(GODOT_BASE_MEMBERS)
+    names |= set(re.findall(r"^\s*(?:@\w+\s+)?var\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*const\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*signal\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*func\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*(?:static\s+)?func\s+\w+\s*\(([^)]*)\)", text, re.M) and
+                  [n.strip().split("=")[0].split(":")[0]
+                   for m in re.finditer(r"^\s*(?:static\s+)?func\s+\w+\s*\(([^)]*)\)", text, re.M)
+                   for n in m.group(1).split(",") if n.strip()])
+    for m in re.finditer(r"^\s*for\s+(\w+)", text, re.M):
+        names.add(m.group(1))
+    for m in re.finditer(r"^\s*(?:var\s+)?(\w+)\s*(?::\w+)?\s*:=", text, re.M):
+        names.add(m.group(1))
+    return names
+
+
+CLASS_FILES = {}
+
+
+def load_class_map():
+    """class_name -> file, plus `extends` so inherited members count."""
+    global CLASS_FILES
+    for root, _dirs, names in os.walk(SRC):
+        for fn in names:
+            if not fn.endswith(".gd"):
+                continue
+            p = os.path.join(root, fn)
+            t = read(p)
+            m = re.search(r"^class_name\s+(\w+)", t, re.M)
+            ext = re.search(r"^extends\s+(\w+)", t, re.M)
+            key = m.group(1) if m else ""
+            CLASS_FILES[p] = (key, ext.group(1) if ext else "")
+
+
+def inherited_names(path, depth=0):
+    """Members contributed by parent classes (one level is enough in practice)."""
+    if depth > 3 or path not in CLASS_FILES:
+        return set()
+    _key, ext = CLASS_FILES[path]
+    if not ext or ext not in {k for (k, _e) in CLASS_FILES.values() if k}:
+        return set()
+    parent = next(p for (p, (k, _e)) in CLASS_FILES.items() if k == ext)
+    text = read(parent)
+    names = set(re.findall(r"^\s*(?:@\w+\s+)?var\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*const\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*signal\s+(\w+)", text, re.M))
+    names |= set(re.findall(r"^\s*func\s+(\w+)", text, re.M))
+    return names | inherited_names(parent, depth + 1)
+
+
+def check_undeclared(path):
+    """`alertness = 1.0` with no declaration anywhere is a hard parse error in
+    Godot ("Identifier not declared in the current scope")."""
+    text = read(path)
+    known = declared_names(text) | inherited_names(path)
+    for idx, raw in enumerate(text.split("\n"), 1):
+        code = strip_comments(raw).strip()
+        if not code or code.startswith("#"):
+            continue
+        m = re.match(r"^(\w+)\s*(?::\s*\w+)?\s*(?:\+=|-=|\*=|/=|=(?!=))", code)
+        if not m:
+            continue
+        nm = m.group(1)
+        if nm in known or nm in ("self", "return", "if", "elif", "for", "while", "match", "pass"):
+            continue
+        report(path, idx, "UNDECLARED-IDENT", nm)
+
+
+def check_int_into_string(path):
+    """`var s: String = obj.int_field` fails to compile in Godot 4."""
+    text = read(path)
+    typed = set(re.findall(r"^\s*(?:@\w+\s+)?var\s+(\w+)\s*:\s*String\b", text, re.M))
+    typed |= set(re.findall(r"^\s*(?:static\s+)?func\s+\w+\s*\(([^)]*)\)\s*->\s*String", text, re.M) and
+                 [n.strip().split("=")[0].split(":")[0] for m in
+                  re.finditer(r"^\s*(?:static\s+)?func\s+\w+\s*\(([^)]*)\)\s*->\s*String", text, re.M)
+                  for n in m.group(1).split(",") if ":" in n and "String" in n.split(":")[1]])
+    # Strings declared anywhere in the project matter, because a field assigned
+    # in one script can be declared in a parent or a sibling module.
+    if not typed:
+        typed = set()
+        for p in CLASS_FILES:
+            text_p = read(p)
+            typed |= set(re.findall(r"^\s*(?:@\w+\s+)?var\s+(\w+)\s*:\s*String\b", text_p, re.M))
+            # `var state := "idle"` is String-typed by inference too
+            typed |= set(re.findall(r'^\s*(?:@\w+\s+)?var\s+(\w+)\s*:=\s*"', text_p, re.M))
+            typed |= set(re.findall(r'^\s*(?:@\w+\s+)?var\s+(\w+)\s*=\s*"', text_p, re.M))
+    if not typed:
+        return
+    for idx, raw in enumerate(text.split("\n"), 1):
+        code = strip_comments(raw)
+        if re.match(r'^\s*\w+(\.\w+)*\.text\s*=', code):
+            continue
+        m = re.match(r"^\s*(\w+)\s*=\s*(.+?)\s*$", code)
+        prop = re.match(r"^\s*(\w+)\.(\w+)\s*=\s*(.+?)\s*$", code)
+        if prop:
+            # `obj.field = 5` where `field` is String-typed somewhere
+            if prop.group(2) in typed and re.search(r"\bint\(", prop.group(3)):
+                report(path, idx, "INT-AS-STRING", "%s = %s" % (prop.group(2), prop.group(3)[:40]))
+            continue
+        if not m or m.group(1) not in typed:
+            continue
+        rhs = m.group(2).strip()
+        if "str(" in rhs:
+            continue
+        # `int(...)` coerced into a String-typed slot: the one pattern that is
+        # unambiguous without a full type solver
+        if rhs.startswith("int("):
+            report(path, idx, "INT-AS-STRING", "%s = %s" % (m.group(1), rhs[:50]))
+
+
 def main():
     files = []
     for root, _dirs, names in os.walk(SRC):
         for fn in sorted(names):
             if fn.endswith(".gd"):
                 files.append(os.path.join(root, fn))
+    load_class_map()
     for path in files:
         check_file(path)
         check_const_class_member(path)
+        check_undeclared(path)
+        check_int_into_string(path)
     for rel, line, kind, detail in problems:
         print("%s:%d  %-18s %s" % (rel, line, kind, detail))
     if "--quiet" not in sys.argv:
