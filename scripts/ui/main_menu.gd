@@ -127,7 +127,7 @@ func _on_button(screen: String) -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_VISIBLE_CHANGE and is_visible_in_tree():
+	if what == NOTIFICATION_VISIBILITY_CHANGED and is_visible_in_tree():
 		_update_status()
 
 

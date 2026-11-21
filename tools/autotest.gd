@@ -8,7 +8,7 @@ var frames := 0
 var phase := 0
 var failures: Array = []
 var main: Node = null
-var match_node: null
+var match_node: Node = null
 var checked := {}
 
 

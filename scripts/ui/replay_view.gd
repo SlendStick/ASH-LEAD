@@ -156,11 +156,13 @@ func _apply_frame() -> void:
 	var pos_a := {}
 	var pos_b := {}
 	var aim_a := {}
+	var aim_b := {}
 	for c in a["chars"]:
 		pos_a[c["name"]] = c["pos"]
 		aim_a[c["name"]] = c["aim"]
 	for c in b["chars"]:
 		pos_b[c["name"]] = c["pos"]
+		aim_b[c["name"]] = c["aim"]
 	for name in sprites:
 		if pos_a.has(name) and pos_b.has(name):
 			var sprite: Sprite2D = sprites[name]

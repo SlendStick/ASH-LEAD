@@ -72,7 +72,7 @@ func _check_scenes() -> void:
 			_fail("scene load failed: " + p)
 			continue
 		var inst: Node = null
-		var err := ps.can_instantiate() if ps is PackedScene else false
+		var err: bool = ps.can_instantiate() if ps is PackedScene else false
 		if ps is PackedScene and err:
 			inst = ps.instantiate()
 			if inst == null:

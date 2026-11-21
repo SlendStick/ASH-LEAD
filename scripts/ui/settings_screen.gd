@@ -129,7 +129,7 @@ func _build_controls() -> void:
 
 func _event_name(ev: InputEvent) -> String:
 	if ev is InputEventKey:
-		return Key.get_string_from_code(ev.physical_keycode if ev.physical_keycode != 0 else ev.keycode)
+		return OS.get_keycode_string(ev.physical_keycode if ev.physical_keycode != 0 else ev.keycode)
 	if ev is InputEventMouseButton:
 		match ev.button_index:
 			MOUSE_BUTTON_LEFT:
