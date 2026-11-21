@@ -163,7 +163,7 @@ func find_interactable(actor: Actor) -> Variant:
 		var o: ObjectiveNode = v["node"]
 		if bool(v["cracked"]) and not bool(o.data.get("taken", false)):
 			if actor.global_position.distance_to(o.global_position) < 74.0:
-				return {"node": o, "kind": "pickup_bag", "text": "Взять сумку", "time": 0.8}
+				return {"node": o, "kind": "pickup_bag", "text": "Взять сумку", "time": 0.8 / Perks.interact_speed_mult(actor)}
 	return null
 
 

@@ -121,13 +121,13 @@ func find_interactable(actor: Actor) -> Variant:
 		if actor.team == Db.TEAM_POLICE and actor.global_position.distance_to(bomb_pos) < 80.0:
 			var o := _bomb_objective()
 			if o != null:
-				return {"node": o, "kind": "defuse", "text": "Разминировать (7 с)", "time": 7.0}
+				return {"node": o, "kind": "defuse", "text": "Разминировать (7 с)", "time": 7.0 / Perks.interact_speed_mult(actor)}
 		return null
 	if actor.team == Db.TEAM_CRIMINAL and carrier != null and actor == carrier:
 		for s in sites:
 			var o2: ObjectiveNode = s["node"]
 			if actor.global_position.distance_to(o2.global_position) < 74.0:
-				return {"node": o2, "kind": "plant", "text": "Заложить заряд (3 с)", "time": 3.0}
+				return {"node": o2, "kind": "plant", "text": "Заложить заряд (3 с)", "time": 3.0 / Perks.interact_speed_mult(actor)}
 	return null
 
 

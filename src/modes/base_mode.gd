@@ -92,7 +92,9 @@ func interaction_text(o: ObjectiveNode, actor: Actor) -> String:
 
 
 func interaction_time(o: ObjectiveNode, actor: Actor) -> float:
-	return 1.6
+	# technician and burglar cut every timed objective short; the base 1.6s is
+	# the neutral interaction, so the perks always pay off somewhere
+	return 1.6 / Perks.interact_speed_mult(actor)
 
 
 func on_objective_interact(o: ObjectiveNode, actor: Actor) -> void:

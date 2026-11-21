@@ -113,7 +113,10 @@ func toggle(by: Actor = null) -> bool:
 	swing = 0.0 if open else 1.0
 	Sfx.play_at("door_open", global_position, -8.0, randf_range(0.9, 1.1))
 	if noise_on_open:
-		Signals.noise_made.emit(global_position, 480.0 if open else 420.0, "door", by.team if by != null else 2)
+		# burglar opens doors at half volume: the radius the AI hears shrinks too,
+		# and opening it by hand stops the loud clack
+		var radius := (480.0 if open else 420.0) * (0.5 if Perks.quiet_breach(by) else 1.0)
+		Signals.noise_made.emit(global_position, radius, "door", by.team if by != null else 2)
 	Signals.door_state.emit(door_id, open, locked)
 	_update_collision()
 	queue_redraw()
@@ -127,7 +130,11 @@ func kick(by: Actor) -> void:
 	locked = false
 	swing = 0.0
 	Sfx.play_at("door_locked", global_position, -2.0, 0.7)
-	Signals.noise_made.emit(global_position, 900.0, "door", by.team if by != null else 2)
+	# a burglar pops the lock instead of kicking it in
+	var kick_radius := 900.0
+	if Perks.quiet_breach(by):
+		kick_radius = 300.0
+	Signals.noise_made.emit(global_position, kick_radius, "door", by.team if by != null else 2)
 	# stun whoever is behind it
 	if world != null and world.has_method("stun_cone"):
 		var stun := 1.2 + Perks.kick_stun(by)

@@ -73,6 +73,10 @@ func _physics_process(delta: float) -> void:
 				bounces += 1
 				if kind in ["molotov", "grenade"] and bounces == 1:
 					Sfx.play_at("ui_click", pos, -18.0, 0.6)
+				# diversion perk: the clatter pulls AI from much further away
+				if kind in ["grenade", "molotov", "remote_charge"] and owner_actor != null:
+					var radius := Perks.diversion_radius(owner_actor)
+					Signals.noise_made.emit(pos, radius, "impact", owner_team)
 				if is_objective:
 					# objectives stick where thrown if they land near their target
 					vel = Vector2.ZERO

@@ -24,13 +24,15 @@ func _process(delta: float) -> void:
 				continue
 			if a.global_position.distance_to(global_position) < pickup_radius:
 				if a.loadout.has(weapon_id):
+					reserve = world.call("ammo_from_corpse", a, reserve) if world.has_method("ammo_from_corpse") else reserve
 					a.reserve = maxi(a.reserve, 0) + reserve
 					reserve = 0
 					queue_free()
 					return
 				a.add_weapon(weapon_id)
 				a.switch_to(weapon_id)
-				a.mag = mag
+				# scavenger picks guns up with a full magazine
+				a.mag = int(Db.WEAPONS.get(weapon_id, {}).get("mag", mag)) if Perks.pickup_comes_loaded(a) else mag
 				a.reserve = reserve
 				Sfx.play_at("pickup", global_position, -6.0)
 				Signals.notify.emit("Подобрано: %s" % str(Db.WEAPONS.get(weapon_id, {}).get("short", weapon_id)), "info")

@@ -165,6 +165,14 @@ func _perceive(delta: float) -> void:
 			continue
 		if other.team == Db.TEAM_CRIMINAL and seen_crim.has(other.a_id):
 			continue
+		# mask perk: the face registers 4 seconds later, so a masked gunman can
+		# walk past a witness before being identified
+		if Perks.witness_delay(other) > 0.0:
+			if not has_meta("mask_since_%d" % other.a_id):
+				set_meta("mask_since_%d" % other.a_id, Time.get_ticks_msec() / 1000.0)
+			var seen_for := Time.get_ticks_msec() / 1000.0 - float(get_meta("mask_since_%d" % other.a_id))
+			if seen_for < Perks.witness_delay(other):
+				continue
 		if not Util.cone_contains(actor.global_position, actor.facing, other.global_position, 1.15) and d > 100.0:
 			continue
 		if actor.world.has_method("vision_blocked") and bool(actor.world.call("vision_blocked", actor.global_position, other.global_position)):

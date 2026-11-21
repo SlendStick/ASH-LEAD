@@ -1847,7 +1847,7 @@ func find_interactable(a: Actor) -> Variant:
 		return grab
 	if best_door != null:
 		if best_door.locked:
-			if a.loadout.has("ksg") or a.loadout.has("breach_kit") or a.team == Db.TEAM_POLICE:
+			if a.loadout.has("ksg") or a.loadout.has("breach_kit") or a.team == Db.TEAM_POLICE or Perks.quiet_breach(a):
 				var kick_time := 1.2 / Perks.interact_speed_mult(a)
 				return {"node": best_door, "kind": "breach_door", "text": "Выбить дверь [E]", "time": kick_time}
 			return {"node": best_door, "kind": "locked_door", "text": "Заперто", "time": 0.6}
