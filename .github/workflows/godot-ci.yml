@@ -100,7 +100,7 @@ jobs:
         run: |
           set -e
           GODOT=/tmp/godot/Godot_v4.7.2-stable_linux.x86_64
-          ASH_AUTOTEST=1 $GODOT --headless --path . --script res://tools/autotest.gd > /tmp/autotest.log 2>&1 || true
+          ASH_AUTOTEST=1 $GODOT --headless --path . res://tools/autotest.tscn > /tmp/autotest.log 2>&1 || true
           cat /tmp/autotest.log
           awk '/^DIAG/{line=$0; if (!seen[line]++) print line; next} /^SCRIPT ERROR:/{msg=$0; getline nxt; line=msg " || " nxt; if (!seen[line]++) print line}' /tmp/autotest.log \
             | head -25 | tr '\n' ' ' > /tmp/digest2.txt

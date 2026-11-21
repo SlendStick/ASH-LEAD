@@ -1,8 +1,9 @@
-extends SceneTree
+extends Node
 ## Headless smoke test: boots the game, starts a bot match, steps frames and
 ## verifies core invariants (map connectivity, bots, HUD, shooting).
 ##
-## Run with:  ASH_AUTOTEST=1 godot --headless --path . --script res://tools/autotest.gd
+## Run with:  godot --headless --path . res://tools/autotest.tscn
+## (Scene-based entry point: autoload singletons are registered normally.)
 
 var frames := 0
 var phase := 0
@@ -12,20 +13,15 @@ var match_node: Node = null
 var checked := {}
 
 
-func _initialize() -> void:
-	print("DIAG children=", root.get_children())
-	print("DIAG loc_node=", root.get_node_or_null("/root/Localization"))
-	print("DIAG audio_node=", root.get_node_or_null("/root/AudioManager"))
-	var tscript: Variant = load("res://scripts/core/types.gd")
-	print("DIAG types_script=", tscript, " can_inst=", tscript != null and tscript.can_instantiate())
+func _ready() -> void:
 	var main_scene: Variant = load("res://scenes/Main.tscn")
 	if main_scene == null:
 		_fail("Main.tscn failed to load")
 		_finish()
 		return
 	main = main_scene.instantiate()
-	root.add_child(main)
-	process_frame.connect(_on_frame)
+	add_child(main)
+	get_tree().process_frame.connect(_on_frame)
 
 
 func _on_frame() -> void:
@@ -51,7 +47,7 @@ func _on_frame() -> void:
 			phase = 3
 		3:
 			_check_match()
-			if frames > 1200:
+			if frames > 1400:
 				_finish()
 
 
@@ -114,9 +110,9 @@ func _check_match() -> void:
 func _finish() -> void:
 	if failures.is_empty():
 		print("AUTOTEST_OK frames=%d" % frames)
-		quit(0)
+		get_tree().quit(0)
 	else:
 		for f in failures:
 			printerr("AUTOTEST_FAILURE: " + str(f))
 		print("AUTOTEST_FAILED frames=%d failures=%d" % [frames, failures.size()])
-		quit(1)
+		get_tree().quit(1)
